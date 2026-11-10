@@ -6,7 +6,7 @@ async def main():
         b=await p.chromium.launch(executable_path='/usr/bin/google-chrome',args=['--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader'])
         pg=await b.new_page(viewport={'width':852,'height':393},device_scale_factor=2,has_touch=True,is_mobile=True)
         errs=[]; pg.on('pageerror',lambda e: errs.append(str(e)))
-        await pg.route('**/*',route)
+        await pg.add_init_script("if(!localStorage.getItem('twq_save_v1')) localStorage.setItem('twq_save_v1',JSON.stringify({v:1,coins:300,cars:['taxi'],parts:{},equip:{},daily:'',streak:0,adDraw:'',races:0,tut:1}))"); await pg.route('**/*',route)
         await pg.goto('file://'+os.path.abspath('game.html')); await pg.wait_for_timeout(20000)
         await pg.click('#dailyOk'); await pg.wait_for_timeout(300); await pg.screenshot(path='s_phone_title.png')
         print(await pg.evaluate("()=>{const c=document.getElementById('c').getBoundingClientRect();return [innerWidth,innerHeight,c.x,c.y,c.width,c.height]}"))

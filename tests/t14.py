@@ -7,7 +7,7 @@ async def main():
         b=await p.chromium.launch(executable_path='/usr/bin/google-chrome',args=['--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader'])
         pg=await b.new_page(viewport={'width':852,'height':393},device_scale_factor=2,has_touch=True,is_mobile=True)
         errs=[]; pg.on('pageerror',lambda e: errs.append(str(e)))
-        await pg.route('**/*',route); await pg.goto('file://'+os.path.abspath('game.html')); await pg.wait_for_timeout(20000)
+        await pg.add_init_script("if(!localStorage.getItem('twq_save_v1')) localStorage.setItem('twq_save_v1',JSON.stringify({v:1,coins:300,cars:['taxi'],parts:{},equip:{},daily:'',streak:0,adDraw:'',races:0,tut:1}))"); await pg.route('**/*',route); await pg.goto('file://'+os.path.abspath('game.html')); await pg.wait_for_timeout(20000)
         await pg.click('#dailyOk'); await pg.tap('#tTap'); await pg.tap('.mbtn[data-go=speed]'); await pg.tap('#toCar'); await pg.tap('#startBtn'); await pg.wait_for_function("()=>__game.state==='race'",timeout=60000); await pg.wait_for_timeout(2500)
         h0=await pg.evaluate('()=>__game.player.heading')
         await pg.evaluate("()=>{window.__auto=false}"); print(await pg.evaluate("()=>{const z=document.getElementById('joyZone');const r=z.getBoundingClientRect();return [r.left,r.top,r.width,r.height,getComputedStyle(z).pointerEvents,getComputedStyle(document.getElementById('touch')).display]}")); await pg.evaluate(EV,['pointerdown',150,280]); await pg.evaluate(EV,['pointermove',100,280]); await pg.wait_for_timeout(1500)

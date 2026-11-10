@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="apple-mobile-web-app-title" content="磁力片賽車"><meta name="theme-color" content="#5fb0ec"><link rel="manifest" href="manifest.webmanifest"><link rel="apple-touch-icon" href="apple-touch-icon.png"><link rel="icon" type="image/png" href="icon-192.png">
 <title>磁力片賽車</title>
-<!-- 版本 2.6 -->
+<!-- 版本 2.7 -->
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@500;700;900&display=swap" rel="stylesheet">
 <style>
   :root{--red:#e8453c;--ink:#2b2236;--cream:#fffaf0;--cut:0px}
@@ -151,6 +151,20 @@
     #tBrake{bottom:34px;width:68px;height:68px;font-size:17px}
     #tHorn{bottom:118px;width:50px;height:50px;font-size:18px}
   }
+
+  /* v2.7：禮物盒、教學提示、閃爍 */
+  #giftIco{font-size:92px;line-height:1.1;display:inline-block}
+  #giftIco.shake{animation:giftShake .6s}
+  #giftIco.pop{animation:giftPop .4s}
+  @keyframes giftShake{0%,100%{transform:rotate(0)}20%{transform:rotate(-14deg)}40%{transform:rotate(14deg)}60%{transform:rotate(-11deg)}80%{transform:rotate(11deg)}}
+  @keyframes giftPop{0%{transform:scale(.4)}70%{transform:scale(1.25)}100%{transform:scale(1)}}
+  #tutBox{position:fixed;left:50%;top:max(58px,calc(env(safe-area-inset-top) + 50px));transform:translateX(-50%);max-width:62%;padding:8px 16px;background:rgba(43,34,54,.9);color:#fff;border-radius:16px;font-weight:800;font-size:clamp(14px,2.4vw,21px);z-index:30;text-align:center;pointer-events:none}
+  #tutSkip{position:fixed;right:max(14px,env(safe-area-inset-right));top:max(136px,calc(env(safe-area-inset-top) + 128px));z-index:31;padding:4px 12px;font-size:13px}
+  @media (max-height:450px){ #tutBox{font-size:13px;padding:5px 12px;top:46px;max-width:46%} }
+  .flash{animation:flashBtn .6s infinite alternate}
+  @keyframes flashBtn{from{box-shadow:0 0 0 0 rgba(255,235,59,0)}to{box-shadow:0 0 0 9px rgba(255,235,59,.95);filter:brightness(1.3)}}
+  .oddsRow{display:flex;justify-content:space-between;gap:12px;background:#fff;border-radius:12px;padding:8px 12px;margin:6px 0;font-weight:800;text-align:left;font-size:14px}
+  #statsTxt{white-space:pre-wrap;text-align:left;font-size:14px;font-weight:700;background:#fff;border-radius:12px;padding:10px;max-height:46vh;overflow:auto}
 </style>
 <script type="importmap">
 {"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"}}
@@ -185,6 +199,7 @@
 <div id="scrMain" class="panel hidden"><div class="card">
   <div id="topbar"><div class="coinbox">💰 <span id="coinTxt">0</span></div><div><span class="help" id="dailyMini"></span></div></div>
   <h1 style="font-size:34px">主選單</h1><p class="sub">選一種玩法開始</p>
+  <button class="btn" id="mQuick" style="width:100%;margin-bottom:8px;padding:10px 14px"><span style="font-size:26px">▶ 快速開跑</span><small id="quickTxt" style="display:block;font-size:13px;opacity:.95;font-weight:700"></small></button>
   <div class="menuGrid">
     <button class="mbtn" data-go="speed"><b>🏁 競速賽</b><small>和 3 台電腦對手搶第一</small></button>
     <button class="mbtn" data-go="trial"><b>⏱ 計時賽</b><small>挑戰自己的紀錄，和幽靈車比</small></button>
@@ -193,7 +208,7 @@
     <button class="mbtn" id="mCup"><b>🏆 聯賽</b><small>連續三場，累積積分拿大獎</small></button>
     <button class="mbtn" id="mBoard"><b>📊 排行榜</b><small>各路段最快成績前十名</small></button>
     <button class="mbtn" id="mGarage"><b>🔧 車庫改裝</b><small>買配件、換顏色、換喇叭</small></button>
-    <button class="mbtn" id="mSet"><b>⚙ 設定</b><small>音量、畫質、畫面調整</small></button>
+    <button class="mbtn" id="mSet"><b>⚙ 設定</b><small>音量、畫質、震動</small></button>
   </div>
   <div class="btnrow" style="align-items:center"><button class="sbtn" id="mHelp" style="padding:12px 16px">❓ 操作說明</button><button class="btn blue" data-back="scrTitle">回開始畫面</button></div>
 </div></div>
@@ -212,8 +227,9 @@
   <div class="btnrow"><button class="btn blue" data-back="scrTrack">返回</button><button class="btn" id="startBtn">出發！</button></div>
 </div></div>
 <div id="scrSettings" class="panel hidden"><div class="card" style="width:520px">
-  <p class="sub" style="margin:0;font-size:12px;opacity:.6;text-align:right">版本 2.6</p>
+  <p class="sub" id="verTxt" style="margin:0;font-size:12px;opacity:.6;text-align:right">版本 2.7</p>
   <h1 style="font-size:32px">設定</h1>
+  <div class="setRow"><div>震動<small>撞擊、氮氣、道具時手機震一下（主要安卓有效）</small></div><button class="sbtn" id="setVib">開</button></div>
   <div id="installRow" class="hidden" style="margin:6px 0 10px"><button class="sbtn ad" id="installBtn">📲 安裝到手機（主畫面圖示）</button></div>
   <div class="setRow"><div>音量<small>引擎聲與音效</small></div><input type="range" id="setVol" min="0" max="100" step="10" style="width:150px"></div>
   <div class="setRow"><div>音效<small>開／關</small></div><button class="sbtn" id="setMute">開</button></div>
@@ -225,7 +241,7 @@
   <h1 style="font-size:32px">操作說明</h1>
   <div class="helpBox">
     <h3>電腦</h3>方向鍵 ←→ 轉彎・↑ 油門・↓ 煞車・Shift 甩尾・Ctrl 或 Z 用氮氣・H 按喇叭・R 回到賽道・Esc 暫停
-    <h3>手機</h3>自動油門，左下角 ◀ ▶ 轉彎，「煞」減速，「甩尾」按住甩尾，「氮氣」噴射，📣 喇叭，右上 ⏸ 暫停
+    <h3>手機</h3>自動油門，左下角搖桿（手指按下就出現）轉彎，「煞」減速，「甩尾」按住甩尾，「氮氣」噴射，📣 喇叭，右上 ⏸ 暫停
     <h3>甩尾與氮氣</h3>過彎時按住甩尾，氮氣條會慢慢集滿，滿一格就能噴射，最多存兩格。連續幾個彎道都甩尾，會有「連彎獎勵」，額外加氮氣。
     <h3>護欄與草地</h3>彎道外側有護欄，撞到會減速但不會翻車；開到草地速度會減半。髮夾彎外側沒有護欄，衝出去如果跑到逆向，按 R 或等幾秒會自動回到賽道。
     <h3>道具賽</h3>撿路上的黃色問號箱得到道具：🩴拖鞋（飛向前方對手）、🟥檳榔汁（丟在後面讓人打滑）、🧋珍珠奶茶（3秒加速＋無敵）、🛡️護盾（擋一次攻擊）、🚀加速。按 X 鍵或點左側道具格使用。
@@ -233,7 +249,7 @@
     <h3>每日挑戰</h3>每天一個特別條件，達成目標可領 💰400，每天一次。
     <h3>賺遊戲幣</h3>跑完比賽、撿金幣、破紀錄都會賺遊戲幣，到「車庫改裝」買配件。
   </div>
-  <div class="btnrow"><button class="btn blue" id="helpBack">返回</button></div>
+  <div class="btnrow"><button class="sbtn" id="helpTut" style="padding:12px 16px">🎓 重玩教學</button><button class="btn blue" id="helpBack">返回</button></div>
 </div></div>
 <div id="pause" class="panel hidden"><div class="card" style="width:380px">
   <h1 style="font-size:32px">暫停</h1>
@@ -257,13 +273,18 @@
 </div>
 <div id="garage" class="panel hidden">
   <div class="card" style="width:600px">
-    <div id="topbar"><div class="coinbox">💰 <span id="coinTxt2">0</span></div><button class="sbtn" id="coinDraw">🎰 抽獎 💰300</button><button class="sbtn ad" id="drawBtn">📺 每日免費抽配件</button></div>
+    <div id="topbar"><div class="coinbox">💰 <span id="coinTxt2">0</span></div><button class="sbtn" id="coinDraw">🎁 禮物盒 💰300</button><button class="sbtn" id="oddsBtn" style="padding:8px 10px">查看機率</button><button class="sbtn ad" id="drawBtn">📺 每日免費禮物盒</button></div>
     <h1 style="font-size:32px">車庫改裝</h1>
     <p class="sub">6 個欄位，每欄 3 種配件・付費不會比較強太多，主要靠實力</p>
     <div id="slotsList"></div>
     <div><button class="btn blue" id="garageBack">回選單</button></div>
   </div>
 </div>
+<div id="giftBox" class="panel hidden"><div class="card" style="width:380px"><div id="giftIco">🎁</div><h1 id="giftTxt" style="font-size:24px">打開中…</h1><button class="btn" id="giftOk">好的</button></div></div>
+<div id="oddsBox" class="panel hidden"><div class="card" style="width:420px"><h1 style="font-size:28px">禮物盒機率</h1><div id="oddsList"></div><p class="sub" style="font-size:12px">每日免費禮物盒：100% 隨機一個未滿級配件升一級，配件全齊時送 💰300。</p><button class="btn" id="oddsOk">關閉</button></div></div>
+<div id="tutDone" class="panel hidden"><div class="card" style="width:380px"><div style="font-size:72px">🎓</div><h1 id="tutDoneTxt" style="font-size:26px">教學完成！</h1><button class="btn" id="tutDoneOk">進入主選單</button></div></div>
+<div id="statsBox" class="panel hidden"><div class="card" style="width:520px"><h1 style="font-size:28px">統計（隱藏）</h1><div id="statsTxt"></div><div class="btnrow"><button class="sbtn" id="statsCopy">複製全部紀錄</button><button class="btn blue" id="statsClose">關閉</button></div></div></div>
+<div id="tutBox" class="hidden"></div><button class="sbtn hidden" id="tutSkip">跳過教學 ▶</button>
 <div id="dailyBox" class="panel hidden"><div class="card" style="width:380px"><h1 style="font-size:30px">每日登入</h1><p class="sub" id="dailyTxt"></p><button class="btn" id="dailyOk">收下！</button></div></div>
 <div id="adBox" class="panel hidden"><div class="card" style="width:380px"><h1 style="font-size:26px">📺 廣告播放中</h1><p class="sub" id="adTxt"></p><p style="font-size:40px;font-weight:900;margin:6px"><span id="adCnt">3</span></p><p class="help">（測試用模擬廣告，之後會換成平台的真廣告）</p></div></div>
 <div id="rotate">📱 請把手機轉成橫向再玩</div>
@@ -578,7 +599,7 @@ for(let i=0;i<140;i++){ const m=new THREE.Mesh(pGeo,new THREE.MeshBasicMaterial(
 let pi=0; function emit(pos,color,vel,life=0.5,size=1){ const p=parts[pi++%parts.length]; p.m.visible=true; p.m.position.copy(pos); p.m.material.color.setHex(color); p.m.material.opacity=1; p.m.scale.setScalar(size); p.v.copy(vel); p.life=p.max=life; }
 function updateParts(dt){ for(const p of parts){ if(p.life<=0) continue; p.life-=dt; p.m.position.addScaledVector(p.v,dt); p.v.y+=1.5*dt; p.m.material.opacity=Math.max(p.life/p.max,0); p.m.scale.multiplyScalar(1+dt*1.5); if(p.life<=0)p.m.visible=false; } }
 let AC=null,engine=null,muted=false;
-const SET=(()=>{ try{ return Object.assign({vol:0.8,quality:0},JSON.parse(localStorage.getItem('twq_set'))); }catch(e){ return {vol:0.8,quality:0}; } })();
+const SET=(()=>{ try{ return Object.assign({vol:0.8,quality:0,vib:true},JSON.parse(localStorage.getItem('twq_set'))); }catch(e){ return {vol:0.8,quality:0,vib:true}; } })();
 function saveSet(){ try{ localStorage.setItem('twq_set',JSON.stringify(SET)); }catch(e){} }
 function initAudio(){ if(AC) return; try{ AC=new (window.AudioContext||window.webkitAudioContext)(); const o=AC.createOscillator(); o.type='sawtooth'; const f=AC.createBiquadFilter(); f.type='lowpass'; f.frequency.value=600; const g=AC.createGain(); g.gain.value=0; o.connect(f).connect(g).connect(AC.destination); o.start(); engine={o,g,f}; }catch(e){AC=null;} }
 function blip(freq,dur=0.12,type='sine',vol=0.12,slide=0){ if(!AC||muted) return; const o=AC.createOscillator(),g=AC.createGain(); o.type=type; o.frequency.value=freq; if(slide) o.frequency.linearRampToValueAtTime(freq+slide,AC.currentTime+dur); g.gain.setValueAtTime(Math.max(0.0011,vol*SET.vol),AC.currentTime); g.gain.exponentialRampToValueAtTime(0.001,AC.currentTime+dur); o.connect(g).connect(AC.destination); o.start(); o.stop(AC.currentTime+dur); }
@@ -586,7 +607,9 @@ function blip(freq,dur=0.12,type='sine',vol=0.12,slide=0){ if(!AC||muted) return
 
 // ================= 存檔・遊戲幣・配件 =================
 const SAVE_KEY='twq_save_v1';
+const FIRST_RUN=(()=>{ try{ return !localStorage.getItem('twq_save_v1'); }catch(e){ return true; } })();
 let SAVE=(()=>{ try{ const x=JSON.parse(localStorage.getItem(SAVE_KEY)); if(x&&x.v===1) return x; }catch(e){} return {v:1,coins:300,cars:['taxi'],parts:{},equip:{},daily:'',streak:0,adDraw:'',races:0}; })();
+if(SAVE.tut===undefined) SAVE.tut=(SAVE.races>0)?1:0;
 function save(){ try{ localStorage.setItem(SAVE_KEY,JSON.stringify(SAVE)); }catch(e){} }
 const SLOTS=[
   {id:'engine',name:'引擎',eff:'最高速',lv:['原廠','改裝','渦輪'],price:[0,400,1000]},
@@ -600,8 +623,16 @@ const DEFMODS={speed:1,grip:1,drift:1,off:0.5,tank:1};
 function getMods(){ const e=eq('engine'),t=eq('tire'),su=eq('susp'),k=eq('tank'); return {speed:[1,1.04,1.08][e],grip:[1,1.05,1.10][t]*[1,1.03,1.06][su],drift:[1,1.15,1.3][t],off:[0.5,0.58,0.66][su],tank:[1,1.25,1.5][k]}; }
 const LOOK_COL=[null,0x7ac943,0xd9302b];
 const todayStr=()=>new Date().toLocaleDateString('sv');
+// ================= 數據追蹤（只存在這支手機；之後把 Track.forward 接到雲端即可）=================
+const TRACK_KEY='twq_track_v1';
+const Track={ forward:null, get(){ try{ return JSON.parse(localStorage.getItem(TRACK_KEY))||[]; }catch(e){ return []; } },
+  add(n,d){ const e={t:Date.now(),n,d:d||{}}; const a=this.get(); a.push(e); while(a.length>500) a.shift(); try{ localStorage.setItem(TRACK_KEY,JSON.stringify(a)); }catch(x){} try{ if(this.forward) this.forward(e); }catch(x){} } };
+function track(n,d){ Track.add(n,d); }
+let raceOpen=false; const tutFlags={nitro:false}; let tutRun=null;
+function endRaceTrack(why){ if(!raceOpen) return; raceOpen=false; try{ track('race_end',{result:why,stage:stage.name,mode,pct:player?Math.round(Math.max(0,Math.min(1,(player.idx-SI0)/Math.max(1,SI1-SI0)))*100):0}); }catch(e){} }
+function buzz(p){ if(!SET.vib) return; try{ if(navigator.vibrate) navigator.vibrate(p); }catch(e){} }
 const Ads={ interstitialOn:false,
-  rewarded(label,cb){ $('adBox').classList.remove('hidden'); $('adTxt').textContent=label; let t=3; $('adCnt').textContent=t; const iv=setInterval(()=>{ t--; $('adCnt').textContent=t; if(t<=0){ clearInterval(iv); $('adBox').classList.add('hidden'); cb(); } },1000); },
+  rewarded(label,cb){ track('ad',{kind:label}); $('adBox').classList.remove('hidden'); $('adTxt').textContent=label; let t=3; $('adCnt').textContent=t; const iv=setInterval(()=>{ t--; $('adCnt').textContent=t; if(t<=0){ clearInterval(iv); $('adBox').classList.add('hidden'); cb(); } },1000); },
   interstitial(){ if(!this.interstitialOn) return; this.rewarded('插頁廣告',()=>{}); } };
 let bonusN2O=0, mode='speed';
 function playHorn(){ if(!AC||muted) return; const h=eq('horn'); const seq=[[[392,0.12],[392,0.2]],[[659,0.12],[622,0.12],[659,0.12],[622,0.12],[659,0.12],[494,0.12],[587,0.12],[523,0.12],[440,0.3]],[[330,0.15],[440,0.15],[330,0.15],[523,0.3]]][h]; let t=0; for(const [f,d] of seq){ setTimeout(()=>blip(f,d*1.5,h===0?'square':'triangle',0.1),t*1000); t+=d; } }
@@ -757,7 +788,7 @@ $('tN2O').addEventListener('pointerdown',e=>{ e.preventDefault(); if(state==='ra
 const isTouch=matchMedia('(pointer:coarse)').matches; if(isTouch) $('tGas').classList.add('hidden');
 const fwd=h=>new THREE.Vector3(-Math.sin(h),0,-Math.cos(h));
 function angDiff(a,b){ let d=a-b; while(d>Math.PI)d-=2*Math.PI; while(d<-Math.PI)d+=2*Math.PI; return d; }
-function useNitro(r){ if(!r||r.finished||r.n2oSlots<=0||r.boost>0.3) return; r.n2oSlots--; r.boost=2.4*r.mods.tank; r.boostKind='n2o'; if(r.isPlayer){ toast('氮氣噴射！'); blip(260,0.5,'sawtooth',0.09,600); } }
+function useNitro(r){ if(!r||r.finished||r.n2oSlots<=0||r.boost>0.3) return; r.n2oSlots--; r.boost=2.4*r.mods.tank; r.boostKind='n2o'; if(r.isPlayer){ buzz(40); tutFlags.nitro=true; toast('氮氣噴射！'); blip(260,0.5,'sawtooth',0.09,600); } }
 
 let ghost=null, ghostData=null, rec=[], recT=0;
 const GKEY=()=>'twq_ghost_'+stage.id+'_'+CARS[chosen].id;
@@ -765,10 +796,10 @@ function loadGhost(){ try{ const g=JSON.parse(localStorage.getItem(GKEY())); if(
 function setupRace(){
   for(const r of racers) scene.remove(r.root); racers=[]; if(ghost){ scene.remove(ghost.root); ghost=null; }
   buildStage(); for(const c of coins) c.active=true;
-  const trial=mode==='trial';
-  const order=trial?[CARS[chosen]]:[CARS[chosen],...CARS.filter((c,i)=>i!==chosen&&c.price>=0)];
+  const trial=mode==='trial'; for(const tl of tilePool){ tl.on=false; tl.g.visible=false; }
+  const order=(trial||tutRun)?[CARS[chosen]]:[CARS[chosen],...CARS.filter((c,i)=>i!==chosen&&c.price>=0)];
   const skill=[[0.84,0.88,0.91],[0.94,0.97,1.0],[1.0,1.03,1.06]][difficulty];
-  order.forEach((c,k)=>{ const col=k===0&&LOOK_COL[eq('look')]!=null?LOOK_COL[eq('look')]:c.color; const car=makeCar(c.id,col); const row=Math.floor(k/2), lane=trial?0:(k%2?1:-1)*2.4; const i=SI0+12-row*8;
+  order.forEach((c,k)=>{ const col=k===0&&LOOK_COL[eq('look')]!=null?LOOK_COL[eq('look')]:c.color; const car=makeCar(c.id,col); const row=Math.floor(k/2), lane=(trial||tutRun)?0:(k%2?1:-1)*2.4; const i=SI0+12-row*8;
     const pos=S[i].clone().addScaledVector(SIDE[i],lane);
     racers.push({...car,def:c,name:k===0?'你':c.name,color:col,pos,y:pos.y,vy:0,heading:headingAt(i),speed:0,steerV:0,drift:0,driftDir:0,boost:0,boostKind:'',n2o:0,n2oSlots:k===0?bonusN2O:0,idx:i,finished:false,time:0,coins:0,isPlayer:k===0,skill:k===0?1:skill[Math.min(k-1,2)],laneBias:rnd(-2.5,2.5),aiN2O:rnd(2,6),mods:k===0?getMods():DEFMODS,item:null,stun:0,shield:0,bless:0});
     { const rr=racers[racers.length-1]; const sm=new THREE.Mesh(new THREE.SphereGeometry(2.1,16,12),new THREE.MeshBasicMaterial({color:0x74c0fc,transparent:true,opacity:0.28,depthWrite:false})); sm.position.y=1.0; sm.visible=false; rr.root.add(sm); rr.shieldMesh=sm; } });
@@ -796,7 +827,17 @@ const slipGeo=new THREE.BoxGeometry(0.9,0.25,1.4), slipMat=toon(0x4dabf7,{emissi
 function buildItemBoxes(){ itemGroup.clear(); boxes=[]; hazards=[];
   for(let i=SI0+70;i<SI1-40;i+=95){ for(const lane of [-2.6,0,2.6]){ const p=S[i].clone().addScaledVector(SIDE[i],lane); const g=new THREE.Group(); const m=new THREE.Mesh(boxGeo,boxMat); const o=new THREE.Mesh(boxGeo,boxOl); o.scale.setScalar(1.12); g.add(m,o); g.position.set(p.x,p.y+1.6,p.z); itemGroup.add(g); boxes.push({g,pos:p,i,active:true,t:0}); } } }
 function rollItem(r){ const place=standings().indexOf(r); const w=place>=2?{slipper:3,juice:2,bless:3,shield:2,boost:3}:place===0?{slipper:2,juice:3,bless:1,shield:3,boost:1}:{slipper:3,juice:2,bless:2,shield:2,boost:2}; let tot=0; for(const k in w) tot+=w[k]; let x=Math.random()*tot; for(const k in w){ x-=w[k]; if(x<=0) return k; } return 'boost'; }
-function hitRacer(r,by){ if(r.bless>0) return; if(r.shield>0){ r.shield=0; if(r.isPlayer) toast('護盾擋下了！'); blip(700,0.15,'triangle',0.08); return; } r.stun=1.1; r.speed*=0.35; if(r.isPlayer){ toast('被打到了！'); blip(110,0.4,'sawtooth',0.1); } }
+// ===== 磁力片飛散再吸回（純特效）=====
+const TILE_COL=[0xff4d4d,0xffd43b,0x3aa0ff,0x4cd964];
+const tilePool=[]; { const g=new THREE.BoxGeometry(0.5,0.5,0.07); for(let i=0;i<40;i++){ const grp=new THREE.Group(); grp.add(new THREE.Mesh(g,toon(TILE_COL[i%4],{transparent:true,opacity:0.82})),new THREE.Mesh(g,outlineMat(0.04))); grp.visible=false; scene.add(grp); tilePool.push({g:grp,on:false,t:0,r:null,v:new THREE.Vector3(),p:new THREE.Vector3(),sp:new THREE.Vector3()}); } }
+let tilePing=0; const _tc=new THREE.Vector3();
+function tileBurst(r,n){ if(!r||!r.pos) return; if(!r.isPlayer&&camera.position.distanceTo(r.pos)>60) return; if(SET.quality===3) n=Math.ceil(n/2);
+  for(let k=0;k<n;k++){ const t=tilePool.find(x=>!x.on); if(!t) break; t.on=true; t.t=0; t.r=r; const a=Math.random()*6.283, sp=5+Math.random()*4; t.v.set(Math.cos(a)*sp,4+Math.random()*3,Math.sin(a)*sp); t.p.set(r.pos.x,r.pos.y+1.1,r.pos.z); t.sp.set(rnd(-9,9),rnd(-9,9),rnd(-9,9)); t.g.visible=true; t.g.position.copy(t.p); } }
+function updateTiles(dt){ for(const t of tilePool){ if(!t.on) continue; t.t+=dt; _tc.set(t.r.pos.x,t.r.pos.y+1.1,t.r.pos.z);
+    if(t.t<0.35){ t.v.y-=9*dt; t.p.addScaledVector(t.v,dt); }
+    else { const u=Math.min(1,(t.t-0.35)/0.4); t.p.lerp(_tc,Math.min(1,0.06+u*u*0.5)); if(u>=1||t.p.distanceTo(_tc)<0.3){ t.on=false; t.g.visible=false; if(t.r.isPlayer&&performance.now()-tilePing>120){ tilePing=performance.now(); blip(1568,0.09,'sine',0.07); } continue; } }
+    t.g.position.copy(t.p); t.g.rotation.x+=t.sp.x*dt; t.g.rotation.y+=t.sp.y*dt; t.g.rotation.z+=t.sp.z*dt; } }
+function hitRacer(r,by){ if(r.bless>0) return; if(r.shield>0){ r.shield=0; if(r.isPlayer) toast('護盾擋下了！'); blip(700,0.15,'triangle',0.08); return; } r.stun=1.1; r.speed*=0.35; tileBurst(r,8); if(r.isPlayer){ buzz(60); toast('被打到了！'); blip(110,0.4,'sawtooth',0.1); } }
 function useItem(r){ if(!r||!r.item||r.finished||r.stun>0) return; const k=r.item; r.item=null; const F=fwd(r.heading);
   if(k==='boost'){ r.boost=Math.max(r.boost,2.0); r.boostKind='n2o'; if(r.isPlayer){ toast('加速！'); blip(300,0.4,'sawtooth',0.09,600); } }
   else if(k==='bless'){ r.bless=3; r.boost=Math.max(r.boost,3); r.boostKind='pad'; if(r.isPlayer){ toast('珍奶補給！'); blip(523,0.2,'triangle',0.1); setTimeout(()=>blip(784,0.3,'triangle',0.1),150); } }
@@ -812,15 +853,16 @@ function itemStep(r,dt){ if(r.stun>0){ r.stun-=dt; r.body.rotation.y+=14*dt; }
   if(r.bless>0) r.bless-=dt; if(r.shield>0) r.shield-=dt;
   if(r.shieldMesh) r.shieldMesh.visible=r.shield>0||r.bless>0;
   if(mode!=='item') return;
-  if(!r.item) for(const b of boxes){ if(!b.active) continue; const dx=r.pos.x-b.pos.x,dz=r.pos.z-b.pos.z; if(dx*dx+dz*dz<4.2&&Math.abs(r.pos.y-b.pos.y)<3){ b.active=false; b.t=8; b.g.visible=false; r.item=rollItem(r); r.aiUse=rnd(1.5,5); if(r.isPlayer){ blip(880,0.1,'triangle',0.08); setTimeout(()=>blip(1175,0.14,'triangle',0.08),80); } break; } }
+  if(!r.item) for(const b of boxes){ if(!b.active) continue; const dx=r.pos.x-b.pos.x,dz=r.pos.z-b.pos.z; if(dx*dx+dz*dz<4.2&&Math.abs(r.pos.y-b.pos.y)<3){ b.active=false; b.t=8; b.g.visible=false; r.item=rollItem(r); r.aiUse=rnd(1.5,5); if(r.isPlayer){ buzz(20); blip(880,0.1,'triangle',0.08); setTimeout(()=>blip(1175,0.14,'triangle',0.08),80); } break; } }
   if(!r.isPlayer&&r.item){ r.aiUse-=dt; if(r.aiUse<=0){ if(r.item==='slipper'){ const front=racers.some(o=>o!==r&&o.idx>r.idx&&o.idx-r.idx<30); if(front) useItem(r); else r.aiUse=1; } else if(r.item==='juice'){ const back=racers.some(o=>o!==r&&o.idx<r.idx&&r.idx-o.idx<30); if(back) useItem(r); else r.aiUse=1; } else useItem(r); } } }
 function itemHUD(){ const b=$('itemBtn'); if(mode!=='item'){ b.classList.add('hidden'); return; } b.classList.remove('hidden'); const it=player.item?ITEMS[player.item]:null; b.classList.toggle('full',!!it); b.innerHTML=it?it.ico+'<small>'+it.name+'</small>':'<span style="opacity:.4">？</span>'; }
 function resetRacer(r,i){ i=Math.max(SI0+2,i-4); const p=S[i]; r.pos.set(p.x,p.y,p.z); r.y=p.y; r.vy=0; r.heading=headingAt(i); r.speed=8; r.drift=0; r.boost=0; r.steerV=0; r.wrongT=0; r.idx=i; if(r.isPlayer){ toast('回到賽道！'); blip(330,0.2,'triangle',0.08); } }
 function updateRacer(r,dt,racing){
+  if(r.tileCd>0) r.tileCd-=dt; if(r.carCd>0) r.carCd-=dt;
   let throttle=0,steer=0,driftBtn=false;
   if(racing && !r.finished){
     if(r.isPlayer && !window.__auto){
-      throttle=isTouch?(touch.brake?-1:1):(keys.ArrowUp||keys.KeyW?1:0)-(keys.ArrowDown||keys.KeyS?1:0);
+      throttle=(isTouch||tutRun)?((touch.brake||keys.ArrowDown||keys.KeyS)?-1:1):(keys.ArrowUp||keys.KeyW?1:0)-(keys.ArrowDown||keys.KeyS?1:0);
       steer=Math.max(-1,Math.min(1,(keys.ArrowLeft||keys.KeyA||touch.left?1:0)-(keys.ArrowRight||keys.KeyD||touch.right?1:0)+touch.axis));
       driftBtn=!!(keys.ShiftLeft||keys.ShiftRight||keys.Space||touch.drift);
     } else {
@@ -853,7 +895,7 @@ function updateRacer(r,dt,racing){
     if(r.drift && (!driftBtn||r.speed<7)){ r.drift=0; if(r.boost<=0){ r.boost=0.35; r.boostKind='tap'; }
       if(raceTime-(r.driftT0||0)>0.7){ r.combo=(raceTime-(r.lastEnd===undefined?-9:r.lastEnd)<2.6)?(r.combo||0)+1:1; r.lastEnd=raceTime; r.comboBest=Math.max(r.comboBest||0,r.combo);
         if(r.combo>=2){ r.n2o+=0.2*Math.min(r.combo,5); while(r.n2o>=1){ r.n2o-=1; if(r.n2oSlots<2) r.n2oSlots++; } if(r.isPlayer) comboShow(r.combo); } } }
-    if(r.drift){ r.n2o+=dt*(0.34+0.3*Math.abs(r.steerV))*(r.speed/MAX)*r.mods.drift; if(r.n2o>=1){ r.n2o=0; if(r.n2oSlots<2){ r.n2oSlots++; toast('氮氣 +1'); blip(880,0.12,'triangle',0.08);} } }
+    if(r.drift){ r.n2o+=dt*(0.34+0.3*Math.abs(r.steerV))*(r.speed/MAX)*r.mods.drift*(tutRun?2:1); if(r.n2o>=1){ r.n2o=0; if(r.n2oSlots<2){ r.n2oSlots++; toast('氮氣 +1'); blip(880,0.12,'triangle',0.08);} } }
   }
   let turn=r.steerV*2.25*r.def.grip*r.mods.grip*THREE.MathUtils.clamp(Math.abs(r.speed)/6,0,1)*Math.sign(r.speed||1)*(1-0.22*Math.abs(r.speed)/MAX);
   if(r.drift){ turn=r.driftDir*(1.2+0.9*r.steerV*r.driftDir); r.speed*=(1-0.08*dt); }
@@ -865,7 +907,7 @@ function updateRacer(r,dt,racing){
     if(sgR!==0 && n2.lat*sgR>HW+1.0){
       const lim=HW+1.0; r.pos.x+=SIDE[i].x*(lim*sgR-n2.lat); r.pos.z+=SIDE[i].z*(lim*sgR-n2.lat);
       const Fv=fwd(r.heading); const out=(Fv.x*SIDE[i].x+Fv.z*SIDE[i].z)*sgR;
-      if(out>0){ r.heading+=angDiff(headingAt(i)+(r.speed<0?Math.PI:0),r.heading)*Math.min(1,5*dt); r.speed*=Math.max(0,1-2.2*dt); if(r.isPlayer&&Math.random()<0.06) blip(140,0.06,'square',0.05); }
+      if(out>0){ if(r.speed>12&&!(r.tileCd>0)){ r.tileCd=0.6; tileBurst(r,4); if(r.isPlayer) buzz(30); } r.heading+=angDiff(headingAt(i)+(r.speed<0?Math.PI:0),r.heading)*Math.min(1,5*dt); r.speed*=Math.max(0,1-2.2*dt); if(r.isPlayer&&Math.random()<0.06) blip(140,0.06,'square',0.05); }
     }
     r.wrongT=r.wrongT||0;
     if(r.isPlayer){ if(along<-0.3&&r.speed>3) r.wrongT+=dt; else r.wrongT=Math.max(0,r.wrongT-dt*2); }
@@ -893,7 +935,7 @@ function updateRacer(r,dt,racing){
   if(r.boost>0&&Math.random()<0.85) emit(back.clone(),r.boostKind==='n2o'?0x4dabf7:0xffa94d,F.clone().multiplyScalar(-6).add(new THREE.Vector3(rnd(-1,1),rnd(0,1),rnd(-1,1))),0.4,1.3);
   if(off&&Math.abs(r.speed)>6&&Math.random()<0.3) emit(back.clone().setY(r.pos.y+0.2),0x8ad67b,new THREE.Vector3(rnd(-1,1),rnd(1,3),rnd(-1,1)),0.5,0.9);
 }
-function collide(){ for(let a=0;a<racers.length;a++)for(let b=a+1;b<racers.length;b++){ const A=racers[a],B=racers[b]; const dx=B.pos.x-A.pos.x,dz=B.pos.z-A.pos.z,d=Math.hypot(dx,dz); if(d<2.3&&d>0.001&&Math.abs(A.pos.y-B.pos.y)<2){ const push=(2.3-d)/2,nx=dx/d,nz=dz/d; A.pos.x-=nx*push;A.pos.z-=nz*push;B.pos.x+=nx*push;B.pos.z+=nz*push; const avg=(A.speed+B.speed)/2; A.speed=A.speed*0.85+avg*0.15; B.speed=B.speed*0.85+avg*0.15; if(A.isPlayer||B.isPlayer) blip(120,0.08,'square',0.05);} } }
+function collide(){ for(let a=0;a<racers.length;a++)for(let b=a+1;b<racers.length;b++){ const A=racers[a],B=racers[b]; const dx=B.pos.x-A.pos.x,dz=B.pos.z-A.pos.z,d=Math.hypot(dx,dz); if(d<2.3&&d>0.001&&Math.abs(A.pos.y-B.pos.y)<2){ const push=(2.3-d)/2,nx=dx/d,nz=dz/d; A.pos.x-=nx*push;A.pos.z-=nz*push;B.pos.x+=nx*push;B.pos.z+=nz*push; const avg=(A.speed+B.speed)/2; A.speed=A.speed*0.85+avg*0.15; B.speed=B.speed*0.85+avg*0.15; if(A.isPlayer||B.isPlayer) blip(120,0.08,'square',0.05); { const P=A.isPlayer?A:(B.isPlayer?B:null); if(P&&!(P.carCd>0)){ P.carCd=0.6; tileBurst(P,3); } } } } }
 function standings(){ return [...racers].sort((a,b)=>{ if(a.finished&&b.finished) return a.time-b.time; if(a.finished) return -1; if(b.finished) return 1; return b.idx-a.idx; }); }
 function fmt(t){ const m=Math.floor(t/60),s=t-m*60; return m+':'+s.toFixed(2).padStart(5,'0'); }
 const progDots=[];
@@ -907,7 +949,7 @@ function updateHUD(){
   $('alt').textContent='海拔 '+Math.round(player.pos.y)+' m・剩餘 '+remain.toFixed(1)+' km';
   $('n2oFill').style.width=(player.n2o*100)+'%'; for(let k=0;k<2;k++){ const s=$('slot'+k); const f=player.n2oSlots>k; s.classList.toggle('full',f); s.textContent=f?'💨':''; }
 }
-function onFinish(){ blip(523,0.15,'triangle',0.12); setTimeout(()=>blip(659,0.15,'triangle',0.12),150); setTimeout(()=>blip(784,0.3,'triangle',0.12),300); toast('完賽！'); setTimeout(showResult,2000); }
+function onFinish(){ blip(523,0.15,'triangle',0.12); setTimeout(()=>blip(659,0.15,'triangle',0.12),150); setTimeout(()=>blip(784,0.3,'triangle',0.12),300); buzz([60,80,60]); toast('完賽！'); setTimeout(()=>{ if(tutRun) finishTutorial(false); else showResult(); },2000); }
 let lastEarn=0, dblDone=false;
 function showResult(){
   state='result'; const list=standings(); const place=list.indexOf(player)+1; const key='twq_real_'+stage.id+'_'+CARS[chosen].id; const trial=mode==='trial';
@@ -915,8 +957,8 @@ function showResult(){
   let isBest=false; if(!best||player.time<best){ isBest=true; try{ localStorage.setItem(key,player.time);}catch(e){} best=player.time; }
   let ghostTxt=''; if(trial){ if(ghostData){ const df=player.time-ghostData.t; ghostTxt=(df<0?'比幽靈車快 ':'比幽靈車慢 ')+Math.abs(df).toFixed(2)+' 秒'; } if(!ghostData||player.time<ghostData.t){ try{ localStorage.setItem(GKEY(),JSON.stringify({t:player.time,d:rec})); }catch(e){} } }
   const comboBonus=Math.min(player.comboBest||0,8)*10; lastEarn=(trial?60+player.coins*5+(isBest?100:0):100+([150,80,40][place-1]||0)+player.coins*5)+comboBonus; dblDone=false;
-  let dcTxt=''; if(dailyRun){ if(place<=dailyRun.goal&&SAVE.dc!==todayStr()){ SAVE.dc=todayStr(); lastEarn+=400; dcTxt='｜每日挑戰達成！+💰400'; refreshDaily(); } else if(place>dailyRun.goal) dcTxt='｜每日挑戰未達成（目標前 '+dailyRun.goal+' 名）'; }
-  Board.submit(stage.id,{t:player.time,car:CARS[chosen].name,tod:TODS[tod].name,d:trial?'計時賽':mode==='item'?'道具賽':'競速賽'});
+  let dcTxt=''; if(dailyRun){ if(place<=dailyRun.goal&&SAVE.dc!==todayStr()){ SAVE.dc=todayStr(); track('daily',{name:dailyRun.t}); lastEarn+=400; dcTxt='｜每日挑戰達成！+💰400'; refreshDaily(); } else if(place>dailyRun.goal) dcTxt='｜每日挑戰未達成（目標前 '+dailyRun.goal+' 名）'; }
+  raceOpen=false; track('race_end',{result:'finish',stage:stage.name,mode:dailyRun?'daily':(cupRun?'cup':mode),place,time:Math.round(player.time*100)/100,pct:100}); Board.submit(stage.id,{t:player.time,car:CARS[chosen].name,tod:TODS[tod].name,d:trial?'計時賽':mode==='item'?'道具賽':'競速賽'});
   let cupTxt=''; $('againBtn').textContent='再跑一次';
   if(cupRun&&!trial){ list.forEach((r,i)=>{ cupRun.pts[r.name]=(cupRun.pts[r.name]||0)+(CUP_PTS[i]||0); }); cupRun.r++;
     const tab=Object.entries(cupRun.pts).sort((a,b)=>b[1]-a[1]); const rk=tab.map(e=>e[0]+' '+e[1]+'分').join('、');
@@ -938,7 +980,7 @@ STAGES.forEach((s,i)=>{ const d=document.createElement('div'); d.className='opt'
 Object.keys(TODS).forEach(k=>{ const d=document.createElement('div'); d.className='opt'+(k==='day'?' on':''); d.innerHTML='<b>'+TODS[k].ico+' '+TODS[k].name+'</b>'; d.onclick=()=>{ applyTOD(k); document.querySelectorAll('#tods .opt').forEach(x=>x.classList.remove('on')); d.classList.add('on'); }; $('tods').appendChild(d); });
 let pendBuy=-1;
 function renderCars(){ const box=$('cars'); box.innerHTML=''; CARS.forEach((c,i)=>{ const owned=SAVE.cars.includes(c.id), soon=false; const d=document.createElement('div'); d.className='car'+(i===chosen?' on':'')+(owned?'':' locked'); const tag=owned?'':(soon?'<span class="price">第二版</span>':'<span class="price">'+(pendBuy===i?'再點一次購買':'💰 '+c.price)+'</span>'); d.innerHTML=`<div class="ico">${c.ico}</div><b>${c.name}</b><small>${c.desc}</small>${tag}`;
-  d.onclick=()=>{ if(soon) return; if(!owned){ if(pendBuy!==i){ pendBuy=i; renderCars(); return; } if(SAVE.coins>=c.price){ SAVE.coins-=c.price; SAVE.cars.push(c.id); save(); pendBuy=-1; chosen=i; toast('買到 '+c.name+'！'); } else { toast('遊戲幣不夠'); pendBuy=-1; } renderCoins(); renderCars(); preview(); return; } pendBuy=-1; chosen=i; renderCars(); preview(); }; box.appendChild(d); }); }
+  d.onclick=()=>{ if(soon) return; if(!owned){ if(pendBuy!==i){ pendBuy=i; renderCars(); return; } if(SAVE.coins>=c.price){ SAVE.coins-=c.price; SAVE.cars.push(c.id); track('buy',{item:'車：'+c.name,cost:c.price}); save(); pendBuy=-1; chosen=i; toast('買到 '+c.name+'！'); } else { toast('遊戲幣不夠'); pendBuy=-1; } renderCoins(); renderCars(); preview(); return; } pendBuy=-1; chosen=i; renderCars(); preview(); }; box.appendChild(d); }); }
 function renderCoins(){ $('coinTxt').textContent=SAVE.coins; $('coinTxt2').textContent=SAVE.coins; }
 renderCars(); renderCoins();
 $('adN2O').onclick=()=>{ if(bonusN2O>0) return; Ads.rewarded('下一場多一罐氮氣',()=>{ bonusN2O=1; $('adN2O').disabled=true; $('adN2O').textContent='✓ 已領，下一場開局有氮氣'; }); };
@@ -946,24 +988,26 @@ function renderGarage(){ renderCoins(); const box=$('slotsList'); box.innerHTML=
   for(const sl of SLOTS){ const row=document.createElement('div'); row.className='slotRow'; row.innerHTML=`<div><b>${sl.name}</b><small>${sl.eff}</small></div><div class="lvls"></div>`; const lv=row.querySelector('.lvls');
     for(let k=0;k<3;k++){ const d=document.createElement('div'); const owned=k<=own(sl.id), cur=eq(sl.id)===k; const next=k===own(sl.id)+1;
       d.className='lv '+(cur?'on':owned?'own':next?'buy':'no'); d.innerHTML=sl.lv[k]+'<small>'+(cur?'使用中':owned?'已擁有':next?'💰 '+sl.price[k]:'先買前一級')+'</small>';
-      d.onclick=()=>{ if(owned){ SAVE.equip[sl.id]=k; save(); renderGarage(); return; } if(!next) return; if(SAVE.coins<sl.price[k]){ toast('遊戲幣不夠'); return; } SAVE.coins-=sl.price[k]; SAVE.parts[sl.id]=k; SAVE.equip[sl.id]=k; save(); renderGarage(); };
+      d.onclick=()=>{ if(owned){ SAVE.equip[sl.id]=k; save(); renderGarage(); return; } if(!next) return; if(SAVE.coins<sl.price[k]){ toast('遊戲幣不夠'); return; } SAVE.coins-=sl.price[k]; track('buy',{item:sl.name+' Lv'+k,cost:sl.price[k]}); SAVE.parts[sl.id]=k; SAVE.equip[sl.id]=k; save(); renderGarage(); };
       lv.appendChild(d); }
     box.appendChild(row); }
-  $('drawBtn').disabled=SAVE.adDraw===todayStr(); $('drawBtn').textContent=SAVE.adDraw===todayStr()?'今天已抽過 ✓':'📺 每日免費抽配件'; }
+  $('drawBtn').disabled=SAVE.adDraw===todayStr(); $('drawBtn').textContent=SAVE.adDraw===todayStr()?'今天已開過 ✓':'📺 每日免費禮物盒'; }
 $('garageBack').onclick=()=>{ showScreen('scrMain'); renderCoins(); preview(); };
-$('drawBtn').onclick=()=>{ if(SAVE.adDraw===todayStr()) return; Ads.rewarded('每日免費抽配件',()=>{ const pool=[]; for(const sl of SLOTS) if(own(sl.id)<2) pool.push(sl); SAVE.adDraw=todayStr(); if(!pool.length){ SAVE.coins+=300; toast('配件全齊！送你 💰300'); } else { const sl=pool[Math.floor(Math.random()*pool.length)]; SAVE.parts[sl.id]=own(sl.id)+1; SAVE.equip[sl.id]=own(sl.id); toast('抽到：'+sl.name+'「'+sl.lv[own(sl.id)]+'」！'); } save(); renderGarage(); }); };
+$('drawBtn').onclick=()=>{ if(SAVE.adDraw===todayStr()) return; Ads.rewarded('每日免費禮物盒',()=>{ SAVE.adDraw=todayStr(); const msg=applyPrize({part:true}); save(); renderGarage(); openGift(msg); }); };
 // 每日登入
 { const t=todayStr(); if(SAVE.daily!==t){ const y=new Date(Date.now()-864e5).toLocaleDateString('sv'); SAVE.streak=SAVE.daily===y?(SAVE.streak||0)+1:1; const r=100+50*Math.min(SAVE.streak-1,6); SAVE.coins+=r; SAVE.daily=t; save(); renderCoins(); $('dailyTxt').textContent='連續登入第 '+SAVE.streak+' 天，獲得 💰 '+r+'（最多連續 7 天加成）'; $('dailyBox').classList.remove('hidden'); } }
 $('dailyOk').onclick=()=>$('dailyBox').classList.add('hidden');
 document.querySelectorAll('#diff button').forEach(b=>b.onclick=()=>{ difficulty=+b.dataset.d; document.querySelectorAll('#diff button').forEach(x=>x.classList.toggle('on',x===b)); });
 let prev=null; const prevI=Math.min(N-1,lmS('peak')); const prevSpot=S[prevI].clone();
 function preview(){ if(!protos.taxi) return; if(prev) scene.remove(prev.root); prev=makeCar(CARS[chosen].id,LOOK_COL[eq('look')]!=null?LOOK_COL[eq('look')]:CARS[chosen].color); prev.root.position.copy(prevSpot); }
-loadP.then(()=>{ $('loadMsg').textContent='準備完成！'; preview(); }).catch(e=>$('loadMsg').textContent='模型載入失敗：'+e);
+loadP.then(()=>{ $('loadMsg').textContent='準備完成！'; preview(); track('open',{first:FIRST_RUN}); }).catch(e=>$('loadMsg').textContent='模型載入失敗：'+e);
 function startRace(){ if(!protos.taxi) return; if(!SAVE.cars.includes(CARS[chosen].id)){ toast('先買這台車'); return; } initAudio(); if(AC&&AC.state==='suspended') AC.resume(); if(prev){ scene.remove(prev.root); prev=null; }
-  setupRace(); buildProg(); showScreen(null);
+  endRaceTrack('restart'); setupRace(); buildProg(); showScreen(null);
+  if(!dailyRun&&!cupRun&&!tutRun){ SAVE.last={mode,stage:STAGES.indexOf(stage),car:CARS[chosen].id,diff:difficulty,tod}; save(); }
+  raceOpen=true; track('race_start',{mode:tutRun?'tut':(dailyRun?'daily':(cupRun?'cup':mode)),stage:stage.name,car:CARS[chosen].id,diff:difficulty,tod,quick:quickRun}); quickRun=false;
   for(const id of ['hudTL','hudTR','speedWrap','prog','alt','mute','n2o','pauseBtn']) $(id).classList.remove('hidden'); if(isTouch) $('touch').classList.remove('hidden');
   state='count'; countT=3.999; lastCount=4; }
-function toMenu(){ dailyRun=null; cupRun=null; refreshDaily(); for(const r of racers) scene.remove(r.root); racers=[]; if(ghost){ scene.remove(ghost.root); ghost=null; } renderCoins(); renderCars(); state='menu'; showScreen('scrMain'); for(const id of ['hudTL','hudTR','speedWrap','prog','alt','mute','touch','n2o','pauseBtn','itemBtn']) $(id).classList.add('hidden'); preview(); }
+function toMenu(){ endRaceTrack('quit'); if(tutRun){ endTutorialUI(); chosen=tutChosenBefore; tutRun=null; } dailyRun=null; cupRun=null; refreshDaily(); for(const r of racers) scene.remove(r.root); racers=[]; if(ghost){ scene.remove(ghost.root); ghost=null; } renderCoins(); renderCars(); state='menu'; showScreen('scrMain'); for(const id of ['hudTL','hudTR','speedWrap','prog','alt','mute','touch','n2o','pauseBtn','itemBtn']) $(id).classList.add('hidden'); preview(); }
 $('startBtn').onclick=()=>{ dailyRun=null; cupRun=null; startRace(); }; function cupRound(){ const c=CUP[cupRun.r]; stage=STAGES[c.stage]; mode=c.mode; applyTOD(c.tod); }
 $('againBtn').onclick=()=>{ if(cupRun&&cupRun.r<CUP.length){ cupRound(); } else { cupRun=null; } startRace(); }; $('menuBtn').onclick=toMenu; $('carBtn').onclick=()=>{ showScreen('scrCar'); state='menu'; for(const r of racers) scene.remove(r.root); racers=[]; if(ghost){ scene.remove(ghost.root); ghost=null; } for(const id of ['hudTL','hudTR','speedWrap','prog','alt','mute','touch','n2o','pauseBtn','itemBtn']) $(id).classList.add('hidden'); preview(); };
 const _unusedCut=()=>{ CUT=(CUT+20)%140; try{ localStorage.setItem('twq_cut',CUT); }catch(e){} applyCut(); resize(); toast('下方留白 '+CUT+'（被切到就多按幾次）'); };
@@ -974,12 +1018,12 @@ addEventListener('keydown',e=>{ if(e.code==='Enter'&&state==='menu'&&!$('scrCar'
 
 // ================= 畫面流程：開始→主選單→選賽道→選車→比賽→結算 =================
 const SCR=['scrBoard','scrTitle','scrMain','scrTrack','scrCar','scrSettings','scrHelp','garage','result','pause'];
-function showScreen(n){ for(const id of SCR) $(id).classList.toggle('hidden',id!==n); }
+function showScreen(n){ for(const id of SCR) $(id).classList.toggle('hidden',id!==n); if(n==='scrMain') renderQuick(); }
 const FEATURES={item:true,daily:true};
 const modeName=()=>({speed:'競速賽',trial:'計時賽＋幽靈車',item:'道具賽'}[mode]);
 let setFrom='scrMain', helpFrom='scrMain';
 $('mItem').classList.toggle('lock',!FEATURES.item); $('mDaily').classList.toggle('lock',!FEATURES.daily);
-$('tTap').onclick=()=>{ initAudio(); showScreen('scrMain'); };
+$('tTap').onclick=()=>{ initAudio(); if(!SAVE.tut){ startTutorial(false); return; } showScreen('scrMain'); };
 document.querySelectorAll('[data-back]').forEach(b=>b.onclick=()=>showScreen(b.dataset.back));
 document.querySelectorAll('.mbtn[data-go]').forEach(b=>b.onclick=()=>{ const m=b.dataset.go; if(m==='item'&&!FEATURES.item){ toast('道具賽第二版推出'); return; } mode=m; $('modeTxt').textContent='模式：'+modeName(); showScreen('scrTrack'); });
 $('toCar').onclick=()=>{ $('modeTxt2').textContent='模式：'+modeName()+'｜'+stage.name; const t=mode==='trial'; $('diff').style.display=t?'none':''; $('diffLabel').style.display=t?'none':''; showScreen('scrCar'); preview(); };
@@ -993,10 +1037,51 @@ let boardStage='a';
 function renderBoard(){ const tabs=$('boardTabs'); tabs.innerHTML=''; STAGES.forEach(st=>{ const d=document.createElement('div'); d.className='opt'+(st.id===boardStage?' on':''); d.innerHTML='<b>'+st.name+'</b>'; d.onclick=()=>{ boardStage=st.id; renderBoard(); }; tabs.appendChild(d); });
   const a=Board.get(boardStage); $('boardList').innerHTML=a.length?a.map((e,i)=>`<div>${i+1}. ${fmt(e.t)}　${e.car}　<small>${e.tod}・${e.d}</small></div>`).join(''):'<div style="opacity:.6;text-align:center">還沒有成績，去跑一場吧！</div>'; }
 $('mBoard').onclick=()=>{ renderBoard(); showScreen('scrBoard'); };
-$('coinDraw').onclick=()=>{ if(SAVE.coins<300){ toast('遊戲幣不夠'); return; } SAVE.coins-=300; const x=Math.random(); let msg;
-  if(x<0.40){ SAVE.coins+=100; msg='獲得 💰100'; } else if(x<0.65){ SAVE.coins+=200; msg='獲得 💰200'; } else if(x<0.75){ SAVE.coins+=500; msg='大獎！💰500'; } else if(x<0.80){ SAVE.coins+=1000; msg='頭獎！💰1000'; } else if(x<0.95){ const pool=SLOTS.filter(sl=>own(sl.id)<2); if(pool.length){ const sl=pool[Math.floor(Math.random()*pool.length)]; SAVE.parts[sl.id]=own(sl.id)+1; SAVE.equip[sl.id]=own(sl.id); msg='抽到配件：'+sl.name+'「'+sl.lv[own(sl.id)]+'」！'; } else { SAVE.coins+=300; msg='配件全齊，退還 💰300'; } } else { SAVE.coins+=50; msg='安慰獎 💰50'; }
-  save(); toast(msg); renderGarage(); };
-const DAILY=[{t:'道具大亂鬥',mode:'item',d:1,car:'taxi',goal:1,desc:'用彩虹小巴，道具賽拿第 1 名'},{t:'高手過招',mode:'speed',d:2,car:null,goal:2,desc:'困難難度，競速賽跑進前 2 名'},{t:'道具混戰',mode:'item',d:2,car:null,goal:2,desc:'困難難度，道具賽跑進前 2 名'},{t:'發財車出動',mode:'speed',d:1,car:'truck',goal:1,desc:'用發財車，競速賽拿第 1 名'},{t:'小黃闖山路',mode:'speed',d:1,car:'taxi',goal:1,desc:'用小黃，競速賽拿第 1 名'},{t:'輕鬆道具賽',mode:'item',d:0,car:null,goal:2,desc:'簡單難度，道具賽跑進前 2 名'},{t:'極速挑戰',mode:'speed',d:2,car:'sedan',goal:3,desc:'用小轎車，困難難度跑進前 3 名'}];
+// ===== 禮物盒（機率只寫在這一份表，抽獎和畫面都讀它）=====
+const DRAW_TABLE=[{id:'c100',name:'💰100',p:40,coin:100},{id:'c200',name:'💰200',p:25,coin:200},{id:'part',name:'隨機一個未滿級配件升一級（配件全齊時退還 💰300）',p:15},{id:'c500',name:'💰500',p:10,coin:500},{id:'c1000',name:'💰1000',p:5,coin:1000},{id:'c50',name:'💰50',p:5,coin:50}];
+if(Math.abs(DRAW_TABLE.reduce((s,e)=>s+e.p,0)-100)>0.001) console.error('DRAW_TABLE 機率總和不是 100');
+function drawFromTable(){ const x=Math.random()*100; let acc=0; for(const e of DRAW_TABLE){ acc+=e.p; if(x<acc) return e; } return DRAW_TABLE[DRAW_TABLE.length-1]; }
+function applyPrize(e){ if(e.coin){ SAVE.coins+=e.coin; return '獲得 '+e.name; } const pool=SLOTS.filter(sl=>own(sl.id)<2); if(pool.length){ const sl=pool[Math.floor(Math.random()*pool.length)]; SAVE.parts[sl.id]=own(sl.id)+1; SAVE.equip[sl.id]=own(sl.id); return '配件升級：'+sl.name+'「'+sl.lv[own(sl.id)]+'」！'; } SAVE.coins+=300; return '配件全齊，退還 💰300'; }
+function openGift(msg){ $('giftBox').classList.remove('hidden'); $('giftIco').className='shake'; $('giftIco').textContent='🎁'; $('giftTxt').textContent='打開中…'; $('giftOk').disabled=true;
+  setTimeout(()=>{ $('giftIco').textContent='🎉'; $('giftIco').className='pop'; $('giftTxt').textContent=msg; $('giftOk').disabled=false; blip(784,0.12,'triangle',0.1); setTimeout(()=>blip(1047,0.2,'triangle',0.1),110); buzz(40); },650); }
+$('giftOk').onclick=()=>$('giftBox').classList.add('hidden');
+$('coinDraw').onclick=()=>{ if(SAVE.coins<300){ toast('遊戲幣不夠'); return; } SAVE.coins-=300; const e=drawFromTable(); const msg=applyPrize(e); track('buy',{item:'禮物盒',cost:300,prize:e.id}); save(); renderGarage(); openGift(msg); };
+$('oddsBtn').onclick=()=>{ $('oddsList').innerHTML=DRAW_TABLE.map(e=>'<div class="oddsRow"><span>'+e.name+'</span><b>'+e.p+'%</b></div>').join(''); $('oddsBox').classList.remove('hidden'); };
+$('oddsOk').onclick=()=>$('oddsBox').classList.add('hidden');
+// ===== 快速開跑 =====
+let quickRun=false; const DIFFN=['簡單','普通','困難'];
+function quickCfg(){ const l=SAVE.last||{mode:'speed',stage:0,car:'taxi',diff:1,tod:'day'}; let ci=CARS.findIndex(c=>c.id===l.car); if(ci<0||!SAVE.cars.includes(CARS[ci].id)) ci=CARS.findIndex(c=>c.id==='taxi'); return {mode:l.mode||'speed',stage:STAGES[l.stage]?l.stage:0,ci,diff:l.diff==null?1:l.diff,tod:TODS[l.tod]?l.tod:'day'}; }
+function renderQuick(){ const q=quickCfg(); $('quickTxt').textContent=({speed:'競速賽',trial:'計時賽',item:'道具賽'}[q.mode]||'競速賽')+'・'+STAGES[q.stage].name+'・'+CARS[q.ci].name+'・'+(q.mode==='trial'?'':DIFFN[q.diff]+'・')+TODS[q.tod].name; }
+$('mQuick').onclick=()=>{ const q=quickCfg(); mode=q.mode; stage=STAGES[q.stage]; chosen=q.ci; difficulty=q.diff; applyTOD(q.tod); dailyRun=null; cupRun=null; quickRun=true; document.querySelectorAll('#diff button').forEach(x=>x.classList.toggle('on',+x.dataset.d===difficulty)); startRace(); };
+// ===== 新手教學賽 =====
+const TUT_STAGE={id:'tut',name:'新手教學',sub:'',r0:0,r1:40}; let tutChosenBefore=0;
+const TUT_STEPS=[
+  {t:()=>isTouch?'車子自己往前開，用搖桿轉彎':'車子會自己往前開，用 ← → 轉彎', ok:dt=>{ if(Math.abs(player.steerV)>0.3) tutRun.acc+=dt; return tutRun.acc>=1.5; }, flash:['joyBase']},
+  {t:()=>isTouch?'一邊轉彎，一邊按住「甩尾」':'快到彎道了，轉彎時按住 Shift 甩尾', ok:()=>player.drift>0, flash:['tDrift']},
+  {t:()=>'繼續甩，氮氣條會慢慢滿', ok:()=>{ if(tutRun.st>18&&player.n2oSlots<1) player.n2oSlots=1; return player.n2oSlots>=1; }, flash:['tDrift']},
+  {t:()=>isTouch?'氮氣滿了！按「氮氣」衝刺':'氮氣滿了！按 Z 或 Ctrl 衝刺', ok:()=>{ if(player.n2oSlots<1&&!tutFlags.nitro&&player.boost<=0) player.n2oSlots=1; return tutFlags.nitro; }, flash:['tN2O']},
+  {t:()=>'路上的金幣可以換配件', ok:()=>player.coins>=1||tutRun.st>=5, flash:[]},
+  {t:()=>'衝到終點！', ok:()=>false, flash:[]}];
+function setTutStep(i){ tutRun.i=i; tutRun.st=0; tutRun.acc=0; if(i===3) tutFlags.nitro=false; const s=TUT_STEPS[i]; $('tutBox').textContent=(i+1)+'／6　'+s.t(); document.querySelectorAll('.flash').forEach(e=>e.classList.remove('flash')); s.flash.forEach(id=>{ const e=$(id); if(e) e.classList.add('flash'); }); track('tut',{s:'step',i:i+1}); }
+function updateTutorial(dt){ if(!tutRun||state!=='race'||!player) return; tutRun.st+=dt; const s=TUT_STEPS[tutRun.i]; if(s&&s.ok(dt)&&tutRun.i<TUT_STEPS.length-1){ blip(988,0.12,'triangle',0.09); setTutStep(tutRun.i+1); } }
+function endTutorialUI(){ $('tutBox').classList.add('hidden'); $('tutSkip').classList.add('hidden'); document.querySelectorAll('.flash').forEach(e=>e.classList.remove('flash')); }
+function startTutorial(replay){ tutChosenBefore=chosen; chosen=Math.max(0,CARS.findIndex(c=>c.id==='taxi')); stage=TUT_STAGE; mode='speed'; applyTOD('day'); dailyRun=null; cupRun=null; tutRun={i:0,acc:0,st:0,replay:!!replay}; tutFlags.nitro=false; track('tut',{s:'start',replay:!!replay}); startRace(); setTutStep(0); $('tutBox').classList.remove('hidden'); $('tutSkip').classList.remove('hidden'); }
+function finishTutorial(skip){ const first=!SAVE.tut; SAVE.tut=1; if(first&&!skip) SAVE.coins+=300; save(); track('tut',{s:skip?'skip':'done',first}); raceOpen=false; toMenu(); renderCoins(); if(!skip){ $('tutDoneTxt').textContent=first?'教學完成！送你 💰300':'教學完成！'; $('tutDone').classList.remove('hidden'); } }
+$('tutSkip').onclick=()=>{ if(tutRun) finishTutorial(true); };
+$('tutDoneOk').onclick=()=>$('tutDone').classList.add('hidden');
+$('helpTut').onclick=()=>startTutorial(true);
+// ===== 隱藏統計（設定畫面版本字連點 5 下）=====
+function statsText(){ const a=Track.get(), c=n=>a.filter(e=>e.n===n); const pc=(x,y)=>y?Math.round(x/y*100)+'%（'+x+'／'+y+'）':'—';
+  const tutDone=a.filter(e=>e.n==='tut'&&e.d.s==='done').length, tutSkip=a.filter(e=>e.n==='tut'&&e.d.s==='skip').length;
+  const L=['紀錄筆數：'+a.length+'（最多留 500 筆）','開啟遊戲：'+c('open').length+' 次（第一次 '+c('open').filter(e=>e.d.first).length+' 次）','教學完成率：'+pc(tutDone,tutDone+tutSkip)+'　（完成 '+tutDone+'、跳過 '+tutSkip+'）','','各模式完賽率：'];
+  const ms={speed:'競速賽',trial:'計時賽',item:'道具賽',daily:'每日挑戰',cup:'聯賽'}; for(const k of Object.keys(ms)){ const st=c('race_start').filter(e=>e.d.mode===k).length, fn=c('race_end').filter(e=>e.d.result==='finish'&&e.d.mode===k).length; L.push('　'+ms[k]+'：'+pc(fn,st)); }
+  const q={}; c('race_end').filter(e=>e.d.result!=='finish'&&e.d.result!=='restart').forEach(e=>{ q[e.d.stage]=(q[e.d.stage]||0)+1; }); const top=Object.entries(q).sort((x,y)=>y[1]-x[1]).slice(0,3);
+  L.push('','中途放棄最多的路段前 3 名：'); if(top.length) top.forEach((e,i)=>L.push('　'+(i+1)+'. '+e[0]+'：'+e[1]+' 次')); else L.push('　（還沒有資料）');
+  L.push('','看廣告：'+c('ad').length+' 次','購買：'+c('buy').length+' 次','每日挑戰完成：'+c('daily').length+' 次'); return L.join('\n'); }
+{ let n=0,tm=0; $('verTxt').onclick=()=>{ const now=Date.now(); n=(now-tm<1500)?n+1:1; tm=now; if(n>=5){ n=0; $('statsTxt').textContent=statsText(); $('statsBox').classList.remove('hidden'); } }; }
+$('statsClose').onclick=()=>$('statsBox').classList.add('hidden');
+$('statsCopy').onclick=async()=>{ const s=JSON.stringify(Track.get()); try{ await navigator.clipboard.writeText(s); toast('已複製 '+Track.get().length+' 筆紀錄'); }catch(e){ const ta=document.createElement('textarea'); ta.value=s; document.body.appendChild(ta); ta.select(); try{ document.execCommand('copy'); toast('已複製紀錄'); }catch(x){ toast('複製失敗'); } ta.remove(); } };
+const DAILY=[{t:'道具大亂鬥',mode:'item',d:1,car:'taxi',goal:1,desc:'用彩虹小巴，道具賽拿第 1 名'},{t:'高手過招',mode:'speed',d:2,car:null,goal:2,desc:'困難難度，競速賽跑進前 2 名'},{t:'道具混戰',mode:'item',d:2,car:null,goal:2,desc:'困難難度，道具賽跑進前 2 名'},{t:'貨卡出動',mode:'speed',d:1,car:'truck',goal:1,desc:'用積木貨卡，競速賽拿第 1 名'},{t:'小巴闖山路',mode:'speed',d:1,car:'taxi',goal:1,desc:'用彩虹小巴，競速賽拿第 1 名'},{t:'輕鬆道具賽',mode:'item',d:0,car:null,goal:2,desc:'簡單難度，道具賽跑進前 2 名'},{t:'極速挑戰',mode:'speed',d:2,car:'sedan',goal:3,desc:'用小轎車，困難難度跑進前 3 名'}];
 let dailyRun=null;
 const dailyToday=()=>{ const d=new Date(); return DAILY[(d.getFullYear()*372+d.getMonth()*31+d.getDate())%DAILY.length]; };
 function refreshDaily(){ const c=dailyToday(), done=SAVE.dc===todayStr(); $('mDaily').innerHTML='<b>📅 每日挑戰'+(done?' ✓':'')+'</b><small>'+c.t+'：'+c.desc+'</small>'; }
@@ -1004,7 +1089,7 @@ $('mDaily').onclick=()=>{ const c=dailyToday(); if(SAVE.dc===todayStr()){ toast(
   let ci=c.car?CARS.findIndex(x=>x.id===c.car):chosen; if(!SAVE.cars.includes(CARS[ci].id)){ toast('這個挑戰要用'+CARS[ci].name+'，先去買車'); return; }
   mode=c.mode; difficulty=c.d; chosen=ci; stage=STAGES[0]; dailyRun=c; document.querySelectorAll('#diff button').forEach(x=>x.classList.toggle('on',+x.dataset.d===difficulty)); startRace(); };
 refreshDaily();
-function openSettings(){ $('setVol').value=Math.round(SET.vol*100); $('setMute').textContent=muted?'關':'開'; document.querySelectorAll('#setQ button').forEach(b=>b.classList.toggle('on',+b.dataset.q===SET.quality)); showScreen('scrSettings'); }
+function openSettings(){ $('setVib').textContent=SET.vib?'開':'關'; $('setVol').value=Math.round(SET.vol*100); $('setMute').textContent=muted?'關':'開'; document.querySelectorAll('#setQ button').forEach(b=>b.classList.toggle('on',+b.dataset.q===SET.quality)); showScreen('scrSettings'); }
 $('tSet').onclick=()=>{ setFrom='scrTitle'; openSettings(); };
 $('mSet').onclick=()=>{ setFrom='scrMain'; openSettings(); };
 $('pSet').onclick=()=>{ setFrom='pause'; openSettings(); };
@@ -1014,6 +1099,7 @@ $('mHelp').onclick=()=>{ helpFrom='scrMain'; showScreen('scrHelp'); };
 $('setHelp').onclick=()=>{ helpFrom='scrSettings'; showScreen('scrHelp'); };
 $('helpBack').onclick=()=>showScreen(helpFrom);
 $('setVol').oninput=e=>{ SET.vol=e.target.value/100; saveSet(); };
+$('setVib').onclick=()=>{ SET.vib=!SET.vib; saveSet(); $('setVib').textContent=SET.vib?'開':'關'; if(SET.vib) buzz(40); };
 $('setMute').onclick=()=>{ muted=!muted; $('mute').textContent=muted?'🔇':'🔊'; $('setMute').textContent=muted?'關':'開'; };
 function applyQuality(){ if(SET.quality===0) return; DPR=[0,Math.min(devicePixelRatio,1.5),1,0.65][SET.quality]; renderer.setPixelRatio(DPR); resize(); }
 document.querySelectorAll('#setQ button').forEach(b=>b.onclick=()=>{ SET.quality=+b.dataset.q; saveSet(); document.querySelectorAll('#setQ button').forEach(x=>x.classList.toggle('on',x===b)); applyQuality(); });
@@ -1025,7 +1111,7 @@ function resumeGame(){ if(state!=='pause') return; state=pausedFrom; showScreen(
 $('pauseBtn').onclick=pauseGame; $('pResume').onclick=resumeGame;
 $('pRestart').onclick=()=>{ state='menu'; startRace(); };
 $('pMenu').onclick=toMenu;
-document.addEventListener('visibilitychange',()=>{ if(document.hidden) pauseGame(); });
+document.addEventListener('visibilitychange',()=>{ if(document.hidden){ if(raceOpen&&(state==='race'||state==='count')) endRaceTrack('close'); pauseGame(); } }); addEventListener('pagehide',()=>endRaceTrack('close'));
 applyQuality(); showScreen('scrTitle');
 
 // ================= loop =================
@@ -1038,11 +1124,11 @@ function frame(now){
     camera.fov=42; camera.updateProjectionMatrix(); camera.position.set(c.x+Math.sin(menuT*0.12)*14,c.y+6,c.z+Math.cos(menuT*0.12)*14); camera.lookAt(c.x,c.y+1,c.z);
   } else {
     for(let sub=0;sub<SUB;sub++){ const racing=state==='race';
-      if(state==='count'){ countT-=dt; const n=Math.ceil(countT); if(n!==lastCount){ lastCount=n; if(n>0){ $('count').textContent=n; $('count').classList.remove('hidden'); blip(440,0.15,'triangle',0.12);} } if(countT<=0){ state='race'; $('count').textContent='GO!'; blip(880,0.35,'triangle',0.14); setTimeout(()=>$('count').classList.add('hidden'),700);} }
+      if(state==='count'){ countT-=dt; const n=Math.ceil(countT); if(n!==lastCount){ lastCount=n; if(n>0){ $('count').textContent=n; $('count').classList.remove('hidden'); blip(440,0.15,'triangle',0.12);} } if(countT<=0){ state='race'; buzz(80); $('count').textContent='GO!'; blip(880,0.35,'triangle',0.14); setTimeout(()=>$('count').classList.add('hidden'),700);} }
       if(racing) raceTime+=dt; for(const r of racers) updateRacer(r,dt,racing); collide(); if(mode==='item'&&racing){ updateHazards(dt); updateBoxes(dt); }
       if(racing&&mode==='trial'&&!player.finished){ recT+=dt; while(recT>=0.1){ recT-=0.1; rec.push(Math.round(player.pos.x*10),Math.round(player.pos.y*10),Math.round(player.pos.z*10),Math.round(player.heading*100)); } } }
     stepGhost(raceTime);
-    updateCoins(rawDt*TS);
+    updateCoins(rawDt*TS); updateTiles(rawDt*TS); updateTutorial(rawDt*TS);
     const F=fwd(player.heading), spd=Math.abs(player.speed)/MAX;
     const want=player.pos.clone().addScaledVector(F,-(10+spd*2.5)); want.y=player.pos.y+6+spd*0.8;
     camPos.lerp(want,1-Math.exp(-rawDt*(state==='count'?30:5))); if(state==='count'&&countT>3.9) camPos.copy(want);
@@ -1064,7 +1150,7 @@ function frame(now){
 }
 requestAnimationFrame(frame);
 window.__info=()=>({calls:renderer.info.render.calls,tris:renderer.info.render.triangles,dpr:DPR,N,len:Math.round(LENM)});
-window.__game={S,T,get state(){return state},get player(){return player},racers:()=>racers,standings,N,setStage:i=>{stage=STAGES[i];},get SI0(){return SI0},get SI1(){return SI1}};
+window.__game={tileBurst,hitRacer,Track,tilePool,get tutRun(){return tutRun},DRAW_TABLE,drawFromTable,statsText,S,T,get state(){return state},get player(){return player},racers:()=>racers,standings,N,setStage:i=>{stage=STAGES[i];},get SI0(){return SI0},get SI1(){return SI1}};
 </script>
 </body>
 </html>
