@@ -280,7 +280,7 @@
   <div class="card" style="width:600px">
     <div id="topbar"><div class="coinbox">💰 <span id="coinTxt2">0</span></div><button class="sbtn" id="coinDraw">🎁 禮物盒 💰300</button><button class="sbtn" id="oddsBtn" style="padding:8px 10px">查看機率</button><button class="sbtn ad" id="drawBtn">📺 每日免費禮物盒</button></div>
     <h1 style="font-size:32px">車庫改裝</h1>
-    <p class="sub">11 種配件，品質分 白・綠・藍・紫・橘 五級・要一級一級往上買，主要還是靠實力</p>
+    <p class="sub">9 種配件，品質分 白・綠・藍・紫・橘 五級・要一級一級往上買，主要還是靠實力</p>
     <div id="slotsList"></div>
     <div><button class="btn blue" id="garageBack">回選單</button></div>
   </div>
@@ -638,9 +638,7 @@ const SLOTS=[
   {id:'brake',name:'煞車',eff:'煞車減速力',lv:['一般煞車','打孔碟盤','運動煞車','陶瓷煞車','碳纖煞車'],price:ext(200,600),st:pct(FX.brake.brake)},
   {id:'exhaust',name:'排氣管',eff:'氮氣噴射威力',lv:['原廠排氣管','直通排氣管','鈦合金排氣管','賽車排氣管','烈焰排氣管'],price:ext(250,700),st:pct(FX.exhaust.pow)},
   {id:'weight',name:'輕量化',eff:'爬坡・加速',lv:['原廠車身','減重內裝','鋁合金件','碳纖維件','羽毛車身'],price:ext(350,900),st:FX.weight.climb.map((g,i)=>(i?'爬坡減速少'+Math.round((1-FX.weight.climb[i])*100)+'%':'爬坡無加成')+' 加速'+pct(FX.weight.acc)[i])},
-  {id:'aero',name:'空力套件',eff:'高速過彎穩定',lv:['無尾翼','小尾翼','運動尾翼','競賽尾翼','全套空力'],price:ext(300,800),st:pct(FX.aero.aero,1).map(x=>x==='無加成'?x:'高速轉向損失 '+x)},
-  {id:'look',name:'外觀',eff:'純好看：車身顏色',lv:['原色','檳榔綠','廟宇紅'],price:[0,150,400],st:['原廠顏色','檳榔綠','廟宇紅']},
-  {id:'horn',name:'喇叭音效',eff:'純好看：按 H 或 📣',lv:['嗶嗶','垃圾車音樂','叫賣聲'],price:[0,150,400],st:['嗶嗶','垃圾車音樂','叫賣聲']}];
+  {id:'aero',name:'空力套件',eff:'高速過彎穩定',lv:['無尾翼','小尾翼','運動尾翼','競賽尾翼','全套空力'],price:ext(300,800),st:pct(FX.aero.aero,1).map(x=>x==='無加成'?x:'高速轉向損失 '+x)}];
 const own=id=>SAVE.parts[id]||0, eq=id=>Math.min(SAVE.equip[id]||0,own(id));
 const DEFMODS={speed:1,grip:1,drift:1,off:0.5,tank:1,acc:1,brake:1,pow:1,climb:1,aero:1};
 function getMods(){ const g=(sl,k)=>FX[sl][k][eq(sl)]; return {speed:g('engine','speed'),grip:g('tire','grip')*g('susp','grip'),drift:g('tire','drift'),off:g('susp','off'),tank:g('tank','tank'),acc:g('gear','acc')*g('weight','acc'),brake:g('brake','brake'),pow:g('exhaust','pow'),climb:g('weight','climb'),aero:g('aero','aero')}; }
@@ -658,7 +656,7 @@ const Ads={ interstitialOn:false,
   rewarded(label,cb){ track('ad',{kind:label}); $('adBox').classList.remove('hidden'); $('adTxt').textContent=label; let t=3; $('adCnt').textContent=t; const iv=setInterval(()=>{ t--; $('adCnt').textContent=t; if(t<=0){ clearInterval(iv); $('adBox').classList.add('hidden'); cb(); } },1000); },
   interstitial(){ if(!this.interstitialOn) return; this.rewarded('插頁廣告',()=>{}); } };
 let bonusN2O=0, mode='speed';
-function playHorn(){ if(!AC||muted) return; const h=eq('horn'); const seq=[[[392,0.12],[392,0.2]],[[659,0.12],[622,0.12],[659,0.12],[622,0.12],[659,0.12],[494,0.12],[587,0.12],[523,0.12],[440,0.3]],[[330,0.15],[440,0.15],[330,0.15],[523,0.3]]][h]; let t=0; for(const [f,d] of seq){ setTimeout(()=>blip(f,d*1.5,h===0?'square':'triangle',0.1),t*1000); t+=d; } }
+function playHorn(){ if(!AC||muted) return; const h=0; const seq=[[[392,0.12],[392,0.2]],[[659,0.12],[622,0.12],[659,0.12],[622,0.12],[659,0.12],[494,0.12],[587,0.12],[523,0.12],[440,0.3]],[[330,0.15],[440,0.15],[330,0.15],[523,0.3]]][h]; let t=0; for(const [f,d] of seq){ setTimeout(()=>blip(f,d*1.5,h===0?'square':'triangle',0.1),t*1000); t+=d; } }
 
 // ================= cars =================
 const CARS=[
@@ -822,7 +820,7 @@ function setupRace(){
   const trial=mode==='trial'; for(const tl of tilePool){ tl.on=false; tl.g.visible=false; }
   const order=(trial||tutRun)?[CARS[chosen]]:[CARS[chosen],...CARS.filter((c,i)=>i!==chosen&&c.price>=0)];
   const skill=[[0.84,0.88,0.91],[0.94,0.97,1.0],[1.0,1.03,1.06]][difficulty];
-  order.forEach((c,k)=>{ const col=k===0&&LOOK_COL[eq('look')]!=null?LOOK_COL[eq('look')]:c.color; const car=makeCar(c.id,col); const row=Math.floor(k/2), lane=(trial||tutRun)?0:(k%2?1:-1)*2.4; const i=SI0+12-row*8;
+  order.forEach((c,k)=>{ const col=c.color; const car=makeCar(c.id,col); const row=Math.floor(k/2), lane=(trial||tutRun)?0:(k%2?1:-1)*2.4; const i=SI0+12-row*8;
     const pos=S[i].clone().addScaledVector(SIDE[i],lane);
     racers.push({...car,def:c,name:k===0?'你':c.name,color:col,pos,y:pos.y,vy:0,heading:headingAt(i),speed:0,steerV:0,drift:0,driftDir:0,boost:0,boostKind:'',n2o:0,n2oSlots:k===0?bonusN2O:0,idx:i,finished:false,time:0,coins:0,isPlayer:k===0,skill:k===0?1:skill[Math.min(k-1,2)],laneBias:rnd(-2.5,2.5),aiN2O:rnd(2,6),mods:k===0?getMods():DEFMODS,item:null,stun:0,shield:0,bless:0});
     { const rr=racers[racers.length-1]; const sm=new THREE.Mesh(new THREE.SphereGeometry(2.1,16,12),new THREE.MeshBasicMaterial({color:0x74c0fc,transparent:true,opacity:0.28,depthWrite:false})); sm.position.y=1.0; sm.visible=false; rr.root.add(sm); rr.shieldMesh=sm; } });
@@ -1016,7 +1014,7 @@ const ICONS={
  gear:c=>{ let t=''; for(let i=0;i<8;i++) t+=`<rect x="28" y="6" width="8" height="12" rx="2" fill="${c}" stroke="${O}" stroke-width="3" transform="rotate(${i*45} 32 32)"/>`; return t+`<circle cx="32" cy="32" r="20" fill="${c}" stroke="${O}" stroke-width="3"/><circle cx="32" cy="32" r="8" fill="#fff" stroke="${O}" stroke-width="3"/>`; },
  brake:c=>`<circle cx="30" cy="32" r="22" fill="${c}" stroke="${O}" stroke-width="3"/><circle cx="30" cy="32" r="7" fill="#fff" stroke="${O}" stroke-width="3"/><g fill="${O}"><circle cx="30" cy="16" r="2.5"/><circle cx="30" cy="48" r="2.5"/><circle cx="14" cy="32" r="2.5"/><circle cx="46" cy="32" r="2.5"/><circle cx="19" cy="21" r="2.5"/><circle cx="41" cy="43" r="2.5"/><circle cx="19" cy="43" r="2.5"/><circle cx="41" cy="21" r="2.5"/></g><path d="M44 14c10 6 10 30 0 36l-4-6c5-5 5-19 0-24z" fill="#ff4d4d" stroke="${O}" stroke-width="3" stroke-linejoin="round"/>`,
  exhaust:c=>`<path d="M6 40h26c8 0 8-14 16-14h6" fill="none" stroke="${O}" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/><path d="M6 40h26c8 0 8-14 16-14h6" fill="none" stroke="${c}" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/><path d="M52 18c8 2 8 14 0 16 3-5 3-11 0-16z" fill="#ff922b" stroke="${O}" stroke-width="2"/><path d="M16 33v14M26 33v14" stroke="${O}" stroke-width="3"/>`,
- weight:c=>`<path d="M14 52C10 30 28 10 52 10c0 22-14 40-30 42z" fill="${c}" stroke="${O}" stroke-width="3" stroke-linejoin="round"/><path d="M12 54L44 22" stroke="${O}" stroke-width="3" stroke-linecap="round"/><path d="M26 38l8 2M32 30l8 2M20 44l8 2" stroke="${O}" stroke-width="2" stroke-linecap="round"/>`,
+ weight:c=>`<g transform="rotate(35 32 32)"><path d="M32 3C47 13 51 32 43 46L32 52 21 46C13 32 17 13 32 3z" fill="${c}" stroke="${O}" stroke-width="3" stroke-linejoin="round"/><path d="M32 40L21 31M32 31L20 21M32 22L24 13M32 40l11-9M32 31l12-10M32 22l8-9" stroke="${O}" stroke-width="2" stroke-linecap="round" opacity=".75"/><path d="M43 46l-5-4M21 46l5-4" stroke="${O}" stroke-width="2" stroke-linecap="round"/><path d="M32 3V62" stroke="${O}" stroke-width="3.5" stroke-linecap="round"/><path d="M26 12c-3 8-3 16 0 24" stroke="#fff" stroke-width="2.5" fill="none" stroke-linecap="round" opacity=".55"/></g>`,
  aero:c=>`<path d="M10 22l40-8 4 8-40 8z" fill="${c}" stroke="${O}" stroke-width="3" stroke-linejoin="round"/><path d="M22 28v22M42 24v22" stroke="${O}" stroke-width="5" stroke-linecap="round"/><path d="M8 18v14M56 10v14" stroke="${O}" stroke-width="3" stroke-linecap="round"/><rect x="14" y="48" width="36" height="6" rx="3" fill="#3b3646" stroke="${O}" stroke-width="3"/>`,
  look:c=>`<path d="M32 6C22 22 14 30 14 40a18 18 0 0 0 36 0C50 30 42 22 32 6z" fill="${c}" stroke="${O}" stroke-width="3" stroke-linejoin="round"/><path d="M24 40a8 8 0 0 0 8 8" stroke="#fff" stroke-width="3" fill="none" stroke-linecap="round" opacity=".8"/>`,
  horn:c=>`<path d="M8 26h10l22-12v36L18 38H8z" fill="${c}" stroke="${O}" stroke-width="3" stroke-linejoin="round"/><path d="M46 24c4 4 4 12 0 16M52 18c8 8 8 20 0 28" fill="none" stroke="${O}" stroke-width="3" stroke-linecap="round"/>`};
@@ -1038,7 +1036,7 @@ $('drawBtn').onclick=()=>{ if(SAVE.adDraw===todayStr()) return; Ads.rewarded('�
 $('dailyOk').onclick=()=>$('dailyBox').classList.add('hidden');
 document.querySelectorAll('#diff button').forEach(b=>b.onclick=()=>{ difficulty=+b.dataset.d; document.querySelectorAll('#diff button').forEach(x=>x.classList.toggle('on',x===b)); });
 let prev=null; const prevI=Math.min(N-1,lmS('peak')); const prevSpot=S[prevI].clone();
-function preview(){ if(!protos.taxi) return; if(prev) scene.remove(prev.root); prev=makeCar(CARS[chosen].id,LOOK_COL[eq('look')]!=null?LOOK_COL[eq('look')]:CARS[chosen].color); prev.root.position.copy(prevSpot); }
+function preview(){ if(!protos.taxi) return; if(prev) scene.remove(prev.root); prev=makeCar(CARS[chosen].id,CARS[chosen].color); prev.root.position.copy(prevSpot); }
 loadP.then(()=>{ $('loadMsg').textContent='準備完成！'; preview(); track('open',{first:FIRST_RUN}); }).catch(e=>$('loadMsg').textContent='模型載入失敗：'+e);
 function startRace(){ if(!protos.taxi) return; if(!SAVE.cars.includes(CARS[chosen].id)){ toast('先買這台車'); return; } initAudio(); if(AC&&AC.state==='suspended') AC.resume(); if(prev){ scene.remove(prev.root); prev=null; }
   endRaceTrack('restart'); setupRace(); buildProg(); showScreen(null);
