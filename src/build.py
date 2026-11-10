@@ -12,12 +12,11 @@ import os, shutil
 T=open('template.html').read()
 js=json.dumps(out,separators=(',',':'))
 # 單檔離線版（資源內嵌）
-b=base64.b64encode(open('tw_cars.glb','rb').read()).decode()
+b=''
 s=T.replace('__REAL_JSON__',js).replace('__GLB_B64__',b).replace('__ASSET_BASE__','')
 open('game.html','w').write(s); print('單檔版',len(s))
 # 外部資源版（網頁用）
 os.makedirs('dist/assets',exist_ok=True)
 open('dist/assets/real.json','w').write(js)
-open('dist/assets/tw_cars.json','w').write(json.dumps({'b64':base64.b64encode(open('tw_cars.glb','rb').read()).decode()}))
 e=T.replace('__REAL_JSON__','null').replace('__GLB_B64__','').replace('__ASSET_BASE__','assets/')
 open('dist/index.html','w').write(e); print('外部版',len(e))
