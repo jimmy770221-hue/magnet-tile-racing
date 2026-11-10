@@ -2,7 +2,8 @@
 <html lang="zh-Hant">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="apple-mobile-web-app-title" content="Q車山路賽"><meta name="theme-color" content="#5fb0ec">
 <title>Q車台灣山路賽・真實地形版</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@500;700;900&display=swap" rel="stylesheet">
 <style>
@@ -11,6 +12,8 @@
   html,body{margin:0;height:100%;height:100dvh;overflow:hidden;background:#cde8f6;font-family:"Noto Sans TC",system-ui,sans-serif;color:var(--ink);user-select:none;-webkit-user-select:none;touch-action:none}
   canvas#c{display:block;width:100%;height:calc(100% - var(--cut));position:fixed;left:0;top:0}
   #touch,#speedWrap,#n2o,#mute,#fsBtn,#cutBtn,#credit{translate:0 calc(-1*var(--cut))}
+  #touch{padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right)}
+  #hudTL{margin-left:env(safe-area-inset-left)}#hudTR{margin-right:env(safe-area-inset-right)}
   #cutBtn{position:fixed;bottom:10px;left:calc(50% - 90px);z-index:6;border:0;background:rgba(255,255,255,.7);border-radius:14px;font-size:20px;padding:4px 10px;cursor:pointer}
   .hud{position:fixed;pointer-events:none;font-weight:900;text-shadow:0 3px 0 rgba(255,255,255,.9),0 0 10px rgba(255,255,255,.6)}
   #hudTL{top:12px;left:16px;font-size:18px;line-height:1.4}
@@ -146,7 +149,7 @@
 <div id="count" class="hidden"></div>
 <div id="sign"><b id="signT"></b><span id="signS"></span></div>
 <div id="toast"></div>
-<button id="pauseBtn" class="hidden">⏸</button><div id="hudCombo"></div><button id="mute" class="hidden">🔊</button><button id="fsBtn" title="全螢幕">⛶</button><button id="cutBtn" title="畫面下方被切到時按這裡">↕</button>
+<button id="pauseBtn" class="hidden">⏸</button><div id="hudCombo"></div><button id="mute" class="hidden">🔊</button><button id="fsBtn" title="全螢幕">⛶</button>
 <div id="credit">地圖 © OpenStreetMap 貢獻者・地形 ASTER GDEM</div>
 <div id="touch" class="hidden">
   <div class="tb" id="tLeft">◀</div><div class="tb" id="tRight">▶</div>
@@ -194,7 +197,6 @@
   <div class="setRow"><div>音量<small>引擎聲與音效</small></div><input type="range" id="setVol" min="0" max="100" step="10" style="width:150px"></div>
   <div class="setRow"><div>音效<small>開／關</small></div><button class="sbtn" id="setMute">開</button></div>
   <div class="setRow"><div>畫質<small>自動會依手機效能調整</small></div><div class="seg" id="setQ"><button data-q="0">自動</button><button data-q="1">高</button><button data-q="2">中</button><button data-q="3">低</button></div></div>
-  <div class="setRow"><div>畫面調整<small>手機下方按鈕被切到時，增加留白</small></div><div><button class="sbtn" id="cutMinus">－</button> <b id="cutVal">0</b> <button class="sbtn" id="cutPlus">＋</button></div></div>
   <div class="setRow"><div>操作說明</div><button class="sbtn" id="setHelp">查看</button></div>
   <div class="btnrow"><button class="btn blue" id="setBack">返回</button></div>
 </div></div>
@@ -263,7 +265,7 @@ const scene=new THREE.Scene();
 scene.fog=new THREE.Fog(0xcfe6f2,350,2600);
 const camera=new THREE.PerspectiveCamera(55,1,0.5,9000);
 function vpSize(){ const vv=window.visualViewport; const w=Math.round(Math.min(innerWidth,document.documentElement.clientWidth||innerWidth,vv?vv.width:1e9)); const h=Math.round(Math.min(innerHeight,document.documentElement.clientHeight||innerHeight,vv?vv.height:1e9)); return [w,h]; }
-let CUT=(()=>{ try{ const v=localStorage.getItem('twq_cut'); if(v!==null) return +v; }catch(e){} return /iPhone|iPad/.test(navigator.userAgent)&&matchMedia('(pointer:coarse)').matches?36:0; })();
+let CUT=0; try{ localStorage.removeItem('twq_cut'); }catch(e){}
 function applyCut(){ document.documentElement.style.setProperty('--cut',CUT+'px'); }
 applyCut();
 function resize(){ const [w,h0]=vpSize(); const h=Math.max(120,h0-CUT); renderer.setSize(w,h,false); camera.aspect=w/h; camera.updateProjectionMatrix(); }
@@ -835,7 +837,7 @@ function startRace(){ if(!protos.taxi) return; if(!SAVE.cars.includes(CARS[chose
 function toMenu(){ dailyRun=null; cupRun=null; refreshDaily(); for(const r of racers) scene.remove(r.root); racers=[]; if(ghost){ scene.remove(ghost.root); ghost=null; } renderCoins(); renderCars(); state='menu'; showScreen('scrMain'); for(const id of ['hudTL','hudTR','speedWrap','prog','alt','mute','touch','n2o','pauseBtn','itemBtn']) $(id).classList.add('hidden'); preview(); }
 $('startBtn').onclick=()=>{ dailyRun=null; cupRun=null; startRace(); }; function cupRound(){ const c=CUP[cupRun.r]; stage=STAGES[c.stage]; mode=c.mode; applyTOD(c.tod); }
 $('againBtn').onclick=()=>{ if(cupRun&&cupRun.r<CUP.length){ cupRound(); } else { cupRun=null; } startRace(); }; $('menuBtn').onclick=toMenu; $('carBtn').onclick=()=>{ showScreen('scrCar'); state='menu'; for(const r of racers) scene.remove(r.root); racers=[]; if(ghost){ scene.remove(ghost.root); ghost=null; } for(const id of ['hudTL','hudTR','speedWrap','prog','alt','mute','touch','n2o','pauseBtn','itemBtn']) $(id).classList.add('hidden'); preview(); };
-$('cutBtn').onclick=()=>{ CUT=(CUT+20)%140; try{ localStorage.setItem('twq_cut',CUT); }catch(e){} applyCut(); resize(); toast('下方留白 '+CUT+'（被切到就多按幾次）'); };
+const _unusedCut=()=>{ CUT=(CUT+20)%140; try{ localStorage.setItem('twq_cut',CUT); }catch(e){} applyCut(); resize(); toast('下方留白 '+CUT+'（被切到就多按幾次）'); };
 $('fsBtn').onclick=()=>{ const d=document.documentElement; try{ if(document.fullscreenElement){ document.exitFullscreen(); } else if(d.requestFullscreen){ d.requestFullscreen().then(()=>{ try{ screen.orientation.lock('landscape'); }catch(e){} }).catch(()=>toast('請用瀏覽器直接開啟連結')); } else toast('請用瀏覽器直接開啟連結'); }catch(e){ toast('請用瀏覽器直接開啟連結'); } };
 $('mute').onclick=()=>{ muted=!muted; $('mute').textContent=muted?'🔇':'🔊'; };
 addEventListener('keydown',e=>{ if(e.code==='Enter'&&state==='menu'&&!$('scrCar').classList.contains('hidden')) startRace(); if((e.code==='Escape'||e.code==='KeyP')) { if(state==='race'||state==='count') pauseGame(); else if(state==='pause') resumeGame(); } });
@@ -873,7 +875,7 @@ $('mDaily').onclick=()=>{ const c=dailyToday(); if(SAVE.dc===todayStr()){ toast(
   let ci=c.car?CARS.findIndex(x=>x.id===c.car):chosen; if(!SAVE.cars.includes(CARS[ci].id)){ toast('這個挑戰要用'+CARS[ci].name+'，先去買車'); return; }
   mode=c.mode; difficulty=c.d; chosen=ci; stage=STAGES[0]; dailyRun=c; document.querySelectorAll('#diff button').forEach(x=>x.classList.toggle('on',+x.dataset.d===difficulty)); startRace(); };
 refreshDaily();
-function openSettings(){ $('setVol').value=Math.round(SET.vol*100); $('setMute').textContent=muted?'關':'開'; document.querySelectorAll('#setQ button').forEach(b=>b.classList.toggle('on',+b.dataset.q===SET.quality)); $('cutVal').textContent=CUT; showScreen('scrSettings'); }
+function openSettings(){ $('setVol').value=Math.round(SET.vol*100); $('setMute').textContent=muted?'關':'開'; document.querySelectorAll('#setQ button').forEach(b=>b.classList.toggle('on',+b.dataset.q===SET.quality)); showScreen('scrSettings'); }
 $('tSet').onclick=()=>{ setFrom='scrTitle'; openSettings(); };
 $('mSet').onclick=()=>{ setFrom='scrMain'; openSettings(); };
 $('pSet').onclick=()=>{ setFrom='pause'; openSettings(); };
@@ -886,8 +888,8 @@ $('setVol').oninput=e=>{ SET.vol=e.target.value/100; saveSet(); };
 $('setMute').onclick=()=>{ muted=!muted; $('mute').textContent=muted?'🔇':'🔊'; $('setMute').textContent=muted?'關':'開'; };
 function applyQuality(){ if(SET.quality===0) return; DPR=[0,Math.min(devicePixelRatio,1.5),1,0.65][SET.quality]; renderer.setPixelRatio(DPR); resize(); }
 document.querySelectorAll('#setQ button').forEach(b=>b.onclick=()=>{ SET.quality=+b.dataset.q; saveSet(); document.querySelectorAll('#setQ button').forEach(x=>x.classList.toggle('on',x===b)); applyQuality(); });
-function setCut(v){ CUT=Math.max(0,Math.min(140,v)); try{ localStorage.setItem('twq_cut',CUT); }catch(e){} applyCut(); resize(); $('cutVal').textContent=CUT; }
-$('cutMinus').onclick=()=>setCut(CUT-10); $('cutPlus').onclick=()=>setCut(CUT+10);
+function setCut(v){ CUT=Math.max(0,Math.min(140,v)); try{ localStorage.setItem('twq_cut',CUT); }catch(e){} applyCut(); resize(); }
+
 let pausedFrom=null;
 function pauseGame(){ if(state!=='race'&&state!=='count') return; pausedFrom=state; state='pause'; showScreen('pause'); $('touch').classList.add('hidden'); }
 function resumeGame(){ if(state!=='pause') return; state=pausedFrom; showScreen(null); if(isTouch) $('touch').classList.remove('hidden'); last=performance.now(); }
