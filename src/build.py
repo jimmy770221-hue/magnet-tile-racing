@@ -20,3 +20,5 @@ os.makedirs('dist/assets',exist_ok=True)
 open('dist/assets/real.json','w').write(js)
 e=T.replace('__REAL_JSON__','null').replace('__GLB_B64__','').replace('__ASSET_BASE__','assets/')
 open('dist/index.html','w').write(e); print('外部版',len(e))
+
+for f in os.listdir('pwa'): shutil.copy('pwa/'+f,'dist/'+f)

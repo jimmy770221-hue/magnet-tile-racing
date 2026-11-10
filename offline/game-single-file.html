@@ -3,9 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-<meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="apple-mobile-web-app-title" content="磁力片賽車"><meta name="theme-color" content="#5fb0ec">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="apple-mobile-web-app-title" content="磁力片賽車"><meta name="theme-color" content="#5fb0ec"><link rel="manifest" href="manifest.webmanifest"><link rel="apple-touch-icon" href="apple-touch-icon.png"><link rel="icon" type="image/png" href="icon-192.png">
 <title>磁力片賽車</title>
-<!-- 版本 2.5 -->
+<!-- 版本 2.6 -->
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@500;700;900&display=swap" rel="stylesheet">
 <style>
   :root{--red:#e8453c;--ink:#2b2236;--cream:#fffaf0;--cut:0px}
@@ -212,8 +212,9 @@
   <div class="btnrow"><button class="btn blue" data-back="scrTrack">返回</button><button class="btn" id="startBtn">出發！</button></div>
 </div></div>
 <div id="scrSettings" class="panel hidden"><div class="card" style="width:520px">
-  <p class="sub" style="margin:0;font-size:12px;opacity:.6;text-align:right">版本 2.5</p>
+  <p class="sub" style="margin:0;font-size:12px;opacity:.6;text-align:right">版本 2.6</p>
   <h1 style="font-size:32px">設定</h1>
+  <div id="installRow" class="hidden" style="margin:6px 0 10px"><button class="sbtn ad" id="installBtn">📲 安裝到手機（主畫面圖示）</button></div>
   <div class="setRow"><div>音量<small>引擎聲與音效</small></div><input type="range" id="setVol" min="0" max="100" step="10" style="width:150px"></div>
   <div class="setRow"><div>音效<small>開／關</small></div><button class="sbtn" id="setMute">開</button></div>
   <div class="setRow"><div>畫質<small>自動會依手機效能調整</small></div><div class="seg" id="setQ"><button data-q="0">自動</button><button data-q="1">高</button><button data-q="2">中</button><button data-q="3">低</button></div></div>
@@ -745,6 +746,14 @@ $('tN2O').addEventListener('pointerdown',e=>{ e.preventDefault(); if(state==='ra
   const end=e=>{ if(e.pointerId!==pid) return; pid=null; touch.axis=0; setKnob(0,0); base.classList.remove('act'); base.style.left=''; base.style.top=''; base.style.bottom=''; };
   zone.addEventListener('pointerup',end); zone.addEventListener('pointercancel',end); })();
 
+
+// ===== 安裝成 App（Android Chrome / 桌面 Chrome）=====
+(function(){ let dp=null; const row=$('installRow'), btn=$('installBtn');
+  addEventListener('beforeinstallprompt',e=>{ e.preventDefault(); dp=e; row.classList.remove('hidden'); });
+  btn.onclick=async()=>{ if(!dp) return; dp.prompt(); try{ await dp.userChoice; }catch(_){} dp=null; row.classList.add('hidden'); };
+  addEventListener('appinstalled',()=>{ dp=null; row.classList.add('hidden'); toast('已安裝，到主畫面開啟！'); });
+  if('serviceWorker' in navigator && /^https?:/.test(location.protocol)) navigator.serviceWorker.register('sw.js').catch(()=>{});
+})();
 const isTouch=matchMedia('(pointer:coarse)').matches; if(isTouch) $('tGas').classList.add('hidden');
 const fwd=h=>new THREE.Vector3(-Math.sin(h),0,-Math.cos(h));
 function angDiff(a,b){ let d=a-b; while(d>Math.PI)d-=2*Math.PI; while(d<-Math.PI)d+=2*Math.PI; return d; }
