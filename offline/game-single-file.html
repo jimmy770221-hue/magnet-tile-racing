@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="apple-mobile-web-app-title" content="磁力片賽車"><meta name="theme-color" content="#5fb0ec">
 <title>磁力片賽車</title>
-<!-- 版本 2.4 -->
+<!-- 版本 2.5 -->
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@500;700;900&display=swap" rel="stylesheet">
 <style>
   :root{--red:#e8453c;--ink:#2b2236;--cream:#fffaf0;--cut:0px}
@@ -212,7 +212,7 @@
   <div class="btnrow"><button class="btn blue" data-back="scrTrack">返回</button><button class="btn" id="startBtn">出發！</button></div>
 </div></div>
 <div id="scrSettings" class="panel hidden"><div class="card" style="width:520px">
-  <p class="sub" style="margin:0;font-size:12px;opacity:.6;text-align:right">版本 2.4</p>
+  <p class="sub" style="margin:0;font-size:12px;opacity:.6;text-align:right">版本 2.5</p>
   <h1 style="font-size:32px">設定</h1>
   <div class="setRow"><div>音量<small>引擎聲與音效</small></div><input type="range" id="setVol" min="0" max="100" step="10" style="width:150px"></div>
   <div class="setRow"><div>音效<small>開／關</small></div><button class="sbtn" id="setMute">開</button></div>
@@ -635,18 +635,38 @@ function tileBase(type){ if(tileCache[type]) return tileCache[type];
   const cx=P.reduce((a,p)=>a+p[0],0)/P.length, cy=P.reduce((a,p)=>a+p[1],0)/P.length, k=type==='sq'?0.8:0.74;
   const inner=P.map(p=>[cx+(p[0]-cx)*k,cy+(p[1]-cy)*k]);
   const sh=new THREE.Shape(P.map(p=>new THREE.Vector2(p[0],p[1]))); sh.holes.push(new THREE.Path(inner.map(p=>new THREE.Vector2(p[0],p[1]))));
-  const fr=new THREE.ExtrudeGeometry(sh,{depth:TILE_T,bevelEnabled:false}); fr.translate(0,0,-TILE_T/2);
+  const fr=new THREE.ExtrudeGeometry(sh,{depth:TILE_T,bevelEnabled:true,bevelThickness:0.012,bevelSize:0.014,bevelSegments:1}); fr.translate(0,0,-TILE_T/2);
   const pa=new THREE.ExtrudeGeometry(new THREE.Shape(inner.map(p=>new THREE.Vector2(p[0],p[1]))),{depth:TILE_T*0.55,bevelEnabled:false}); pa.translate(0,0,-TILE_T*0.275);
-  return tileCache[type]={fr,pa}; }
+  const kk=type==='sq'?0:type==='tri'?1:2, pp=pa.attributes.position, aT=new Float32Array(pp.count*3); for(let i=0;i<pp.count;i++){ aT[i*3]=pp.getX(i); aT[i*3+1]=pp.getY(i); aT[i*3+2]=kk; }
+  return tileCache[type]={fr,pa,aT}; }
+// 磁力片玻璃：鑽石切面、深邊框、斜向高光（用片內座標在著色器畫出，不用貼圖）
+function glassMat(){ const m=new THREE.MeshStandardMaterial({vertexColors:true,transparent:true,opacity:0.8,depthWrite:false,side:THREE.DoubleSide,roughness:0.12,metalness:0});
+  m.onBeforeCompile=s=>{ s.vertexShader=s.vertexShader.replace('#include <common>','#include <common>\nattribute vec3 aT; varying vec3 vT;').replace('#include <begin_vertex>','#include <begin_vertex>\n vT=aT;');
+    s.fragmentShader=s.fragmentShader.replace('#include <common>','#include <common>\nvarying vec3 vT;').replace('#include <color_fragment>',`#include <color_fragment>
+      { vec2 p=vT.xy; float d1,d2,d3; float br=1.0;
+        if(vT.z<0.5){ d1=0.5-p.x; d2=0.5+p.x; d3=0.5-p.y; float d4=0.5+p.y; float m1=min(min(d1,d2),min(d3,d4));
+          float fx=step(abs(p.y),abs(p.x)); br=fx>0.5?(p.x>0.?0.9:1.05):(p.y>0.?1.22:0.78);
+          float sec=min(abs(abs(p.x)-abs(p.y)),1.0); d1=m1; d2=m1+sec*0.7; }
+        else if(vT.z<1.5){ float a=p.y+0.2887, b=0.2887-dot(p,vec2(-0.866,0.5)), c=0.2887-dot(p,vec2(0.866,0.5)); d1=min(a,min(b,c)); d3=max(a,max(b,c)); d2=a+b+c-d1-d3;
+          br=(a<=b&&a<=c)?0.8:(b<=c?1.12:1.0); }
+        else { float a=p.y+0.5, b=p.x+0.5, c=-(p.x+p.y)*0.7071; d1=min(a,min(b,c)); d3=max(a,max(b,c)); d2=a+b+c-d1-d3;
+          br=(a<=b&&a<=c)?0.8:(b<=c?1.1:1.2); }
+        float ed=d1;
+        float rim=smoothstep(0.0,0.085,ed);
+        vec3 col=pow(diffuseColor.rgb,vec3(0.8))*1.35*mix(0.7,br,rim);
+        float ridge=1.0-smoothstep(0.0,0.014,d2-d1); col+=vec3(0.22)*ridge*rim;
+        float dg=p.x-p.y; float band=smoothstep(0.08,0.0,abs(dg+0.16))*0.45+smoothstep(0.03,0.0,abs(dg+0.34))*0.3; col+=vec3(band)*rim;
+        diffuseColor.rgb=col; diffuseColor.a=mix(0.92,0.62,rim)+band*0.2; }`); };
+  m.customProgramCacheKey=()=>'tileglass'; return m; }
 function smoothOutline(g){ const p=g.attributes.position, n=g.attributes.normal, m=new Map(); const key=i=>Math.round(p.getX(i)*400)+','+Math.round(p.getY(i)*400)+','+Math.round(p.getZ(i)*400);
   for(let i=0;i<p.count;i++){ const k=key(i); const a=m.get(k)||[0,0,0]; a[0]+=n.getX(i); a[1]+=n.getY(i); a[2]+=n.getZ(i); m.set(k,a); }
   const g2=g.clone(), n2=g2.attributes.normal; for(let i=0;i<p.count;i++){ const a=m.get(key(i)); const l=Math.hypot(a[0],a[1],a[2])||1; n2.setXYZ(i,a[0]/l,a[1]/l,a[2]/l); } return g2; }
 const WHITE=new THREE.Color(1,1,1);
 function buildTileCar(id,main){
-  const solid=[], glass=[]; const V=(x,y,z)=>new THREE.Vector3(x,y,z);
+  const solid=[], glass=[], frames=[]; const V=(x,y,z)=>new THREE.Vector3(x,y,z);
   const col=c=>c==='M'?main:c;
   function T(type,c,cx,cy,cz,u,n){ c=col(c); const x=V(...u).normalize(), z=V(...n).normalize(), y=new THREE.Vector3().crossVectors(z,x); const m=new THREE.Matrix4().makeBasis(x,y,z); m.setPosition(cx,cy,cz); const b=tileBase(type);
-    solid.push(vcol(b.fr.clone().applyMatrix4(m),c)); glass.push(vcol(b.pa.clone().applyMatrix4(m),new THREE.Color(c).lerp(WHITE,0.22).getHex())); }
+    frames.push(vcol(b.fr.clone().applyMatrix4(m),new THREE.Color(c).lerp(WHITE,0.12).getHex())); const g=vcol(b.pa.clone().applyMatrix4(m),new THREE.Color(c).getHex()); g.setAttribute('aT',new THREE.BufferAttribute(b.aT,3)); glass.push(g); }
   const F=(t,c,x,y,z)=>T(t,c,x,y,z,[1,0,0],[0,1,0]), WZ=(t,c,x,y,z)=>T(t,c,x,y,z,[1,0,0],[0,0,1]), WX=(t,c,x,y,z)=>T(t,c,x,y,z,[0,0,-1],[1,0,0]);
   function box(c,x,y,z,sx,sy,sz){ solid.push(vcol(new THREE.BoxGeometry(sx,sy,sz).translate(x,y,z),col(c))); }
   function ball(c,x,y,z,r){ solid.push(vcol(new THREE.SphereGeometry(r,10,8).translate(x,y,z),col(c))); }
@@ -688,9 +708,9 @@ function buildTileCar(id,main){
   box(0xfff6c8,-.65,cfg.top-.08,-2.03,.34,.2,.06); box(0xfff6c8,.65,cfg.top-.08,-2.03,.34,.2,.06); box(0xff4d5a,-.65,cfg.top-.08,2.03,.34,.2,.06); box(0xff4d5a,.65,cfg.top-.08,2.03,.34,.2,.06);
   const [dx,dy,dz]=cfg.drv; solid.push(vcol(new THREE.CylinderGeometry(.17,.21,.42,10).translate(dx,dy+.21,dz),main), vcol(new THREE.SphereGeometry(.2,12,10).translate(dx,dy+.62,dz),0xe8b887));
   const body=new THREE.Group(); const root=new THREE.Group(); root.add(body);
-  const sg=mergeGeometries(solid), gg=mergeGeometries(glass);
-  const gm=toon(0xffffff,{vertexColors:true,transparent:true,opacity:0.52,depthWrite:false,side:THREE.DoubleSide});
-  body.add(new THREE.Mesh(sg,toon(0xffffff,{vertexColors:true,emissive:0x141414})),new THREE.Mesh(smoothOutline(sg),outlineMat(0.035)),new THREE.Mesh(gg,gm));
+  const sg=mergeGeometries(solid), fg=mergeGeometries(frames), gg=mergeGeometries(glass);
+  body.add(new THREE.Mesh(sg,toon(0xffffff,{vertexColors:true,emissive:0x141414})),new THREE.Mesh(smoothOutline(sg),outlineMat(0.035)),
+    new THREE.Mesh(fg,new THREE.MeshStandardMaterial({vertexColors:true,roughness:0.28,metalness:0.05,emissive:0x1a1a1a})),new THREE.Mesh(smoothOutline(fg),outlineMat(0.022)),new THREE.Mesh(gg,glassMat()));
   // 輪子（黑胎＋白輪圈＋五角星芯）
   const wr=cfg.wr, ww=.42, wheels=[], front=[];
   const wg=mergeGeometries([vcol(new THREE.CylinderGeometry(wr,wr,ww,22).rotateZ(Math.PI/2),0x2a2630),vcol(new THREE.CylinderGeometry(wr*.64,wr*.64,ww+.05,16).rotateZ(Math.PI/2),cfg.hub),vcol(new THREE.CylinderGeometry(wr*.4,wr*.4,ww+.1,5).rotateZ(Math.PI/2),0x3b3646)]);
