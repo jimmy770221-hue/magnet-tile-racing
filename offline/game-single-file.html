@@ -103,6 +103,10 @@
   .pIco.q3{border-color:#b06cff;background:radial-gradient(circle at 35% 30%,#fff,#e9d8fd);box-shadow:0 0 8px #b06cff88}
   .pIco.q4{border-color:#ff922b;background:radial-gradient(circle at 35% 30%,#fff,#ffe8cc);animation:qglow 1.6s ease-in-out infinite}
   @keyframes qglow{0%,100%{box-shadow:0 0 6px #ff922b88}50%{box-shadow:0 0 16px #ff922b}}
+  .slotRow{grid-template-columns:62px 150px 1fr}.slotR{min-width:0}
+  .enh{display:flex;align-items:center;gap:8px;margin-top:6px}.eLbl{font-size:12px;font-weight:900;white-space:nowrap}
+  .pips{display:flex;gap:4px}.pips i{width:14px;height:14px;border-radius:4px;background:#dee2e6;border:2px solid #adb5bd;transform:skew(-12deg)}.pips i.on{background:linear-gradient(#ffe066,#f59f00);border-color:#e67700}
+  .eBtn{margin-left:auto;border:0;font:inherit;font-weight:900;font-size:12px;padding:5px 10px;border-radius:10px;background:#4263eb;color:#fff;cursor:pointer}.eBtn:disabled{background:#ced4da;color:#868e96;cursor:default}
   .lvls{display:grid;gap:5px}
   .lv{border:3px solid var(--q,#dee2e6);background:#f8f9fa;border-radius:12px;padding:4px 1px;text-align:center;font-weight:900;font-size:13px;cursor:pointer;min-width:0}
   .lv .qi{display:block;line-height:0}.lv small{display:block;font-size:10px;opacity:.85;white-space:nowrap}
@@ -280,7 +284,7 @@
   <div class="card" style="width:600px">
     <div id="topbar"><div class="coinbox">💰 <span id="coinTxt2">0</span></div><button class="sbtn" id="coinDraw">🎁 禮物盒 💰300</button><button class="sbtn" id="oddsBtn" style="padding:8px 10px">查看機率</button><button class="sbtn ad" id="drawBtn">📺 每日免費禮物盒</button></div>
     <h1 style="font-size:32px">車庫改裝</h1>
-    <p class="sub">9 種配件，品質分 白・綠・藍・紫・橘 五級・要一級一級往上買，主要還是靠實力</p>
+    <p class="sub">8 種配件，品質分 白・綠・藍・紫・橘 五級，買到後還能再強化 5 次（含減重），主要還是靠實力</p>
     <div id="slotsList"></div>
     <div><button class="btn blue" id="garageBack">回選單</button></div>
   </div>
@@ -616,6 +620,8 @@ const FIRST_RUN=(()=>{ try{ return !localStorage.getItem('twq_save_v1'); }catch(
 let SAVE=(()=>{ try{ const x=JSON.parse(localStorage.getItem(SAVE_KEY)); if(x&&x.v===1) return x; }catch(e){} return {v:1,coins:300,cars:['taxi'],parts:{},equip:{},daily:'',streak:0,adDraw:'',races:0}; })();
 if(SAVE.tut===undefined) SAVE.tut=(SAVE.races>0)?1:0;
 function save(){ try{ localStorage.setItem(SAVE_KEY,JSON.stringify(SAVE)); }catch(e){} }
+if(!SAVE.enh) SAVE.enh={};
+if(SAVE.parts&&SAVE.parts.weight){ SAVE.coins+=[0,350,900,1950,4150][Math.min(4,SAVE.parts.weight)]; delete SAVE.parts.weight; if(SAVE.equip) delete SAVE.equip.weight; save(); }
 const QN=['白色','綠色','藍色','紫色','橘色'], QC=['#e9ecef','#51cf66','#4dabf7','#b06cff','#ff922b'];
 const ext=(a,b)=>[0,a,b,Math.round(b*2.2/50)*50,Math.round(b*4.6/50)*50];
 const pct=(arr,inv)=>arr.map(v=>{ const d=Math.round((inv?(1-v):(v-1))*100); return d===0?'無加成':(inv?'-':'+')+d+'%'; });
@@ -627,7 +633,6 @@ const FX={
   gear:{acc:[1,1.05,1.10,1.15,1.20]},
   brake:{brake:[1,1.15,1.3,1.45,1.6]},
   exhaust:{pow:[1,1.03,1.06,1.09,1.12]},
-  weight:{climb:[1,0.9,0.8,0.7,0.6],acc:[1,1.02,1.04,1.06,1.08]},
   aero:{aero:[1,0.85,0.7,0.55,0.4]}};
 const SLOTS=[
   {id:'engine',name:'引擎',eff:'最高速',lv:['原廠引擎','強化引擎','賽道引擎','雙渦輪引擎','傳說核心'],price:ext(400,1000),st:pct(FX.engine.speed)},
@@ -637,11 +642,15 @@ const SLOTS=[
   {id:'gear',name:'變速箱',eff:'起步・加速',lv:['原廠變速箱','短檔比','運動變速箱','競賽排檔','瞬變變速箱'],price:ext(300,800),st:pct(FX.gear.acc)},
   {id:'brake',name:'煞車',eff:'煞車減速力',lv:['一般煞車','打孔碟盤','運動煞車','陶瓷煞車','碳纖煞車'],price:ext(200,600),st:pct(FX.brake.brake)},
   {id:'exhaust',name:'排氣管',eff:'氮氣噴射威力',lv:['原廠排氣管','直通排氣管','鈦合金排氣管','賽車排氣管','烈焰排氣管'],price:ext(250,700),st:pct(FX.exhaust.pow)},
-  {id:'weight',name:'輕量化',eff:'爬坡・加速',lv:['原廠車身','減重內裝','鋁合金件','碳纖維件','羽毛車身'],price:ext(350,900),st:FX.weight.climb.map((g,i)=>(i?'爬坡減速少'+Math.round((1-FX.weight.climb[i])*100)+'%':'爬坡無加成')+' 加速'+pct(FX.weight.acc)[i])},
   {id:'aero',name:'空力套件',eff:'高速過彎穩定',lv:['無尾翼','小尾翼','運動尾翼','競賽尾翼','全套空力'],price:ext(300,800),st:pct(FX.aero.aero,1).map(x=>x==='無加成'?x:'高速轉向損失 '+x)}];
 const own=id=>SAVE.parts[id]||0, eq=id=>Math.min(SAVE.equip[id]||0,own(id));
 const DEFMODS={speed:1,grip:1,drift:1,off:0.5,tank:1,acc:1,brake:1,pow:1,climb:1,aero:1};
-function getMods(){ const g=(sl,k)=>FX[sl][k][eq(sl)]; return {speed:g('engine','speed'),grip:g('tire','grip')*g('susp','grip'),drift:g('tire','drift'),off:g('susp','off'),tank:g('tank','tank'),acc:g('gear','acc')*g('weight','acc'),brake:g('brake','brake'),pow:g('exhaust','pow'),climb:g('weight','climb'),aero:g('aero','aero')}; }
+const ENH_MAX=5, enhOf=id=>Math.min(ENH_MAX,(SAVE.enh&&SAVE.enh[id])||0), enhCost=(sl,l)=>Math.round(sl.price[1]*0.5*(l+1)/10)*10;
+const fxv=(sl,k)=>{ const a=FX[sl][k]; return a[eq(sl)]+(a[4]-a[0])/16*enhOf(sl); };
+const PP=v=>{ const d=Math.round((v-1)*100); return d?(d>0?'+':'')+d+'%':'無加成'; };
+function statNow(id){ const f=fxv; switch(id){ case 'engine': return '最高速'+PP(f(id,'speed')); case 'tire': return '抓地'+PP(f(id,'grip'))+' 甩尾'+PP(f(id,'drift')); case 'susp': return '過彎'+PP(f(id,'grip'))+' 草地速度'+Math.round(f(id,'off')*100)+'%'; case 'tank': return '噴射時間'+PP(f(id,'tank')); case 'gear': return '加速'+PP(f(id,'acc')); case 'brake': return '煞車力'+PP(f(id,'brake')); case 'exhaust': return '氮氣威力'+PP(f(id,'pow')); case 'aero': { const d=Math.round((1-f(id,'aero'))*100); return d?'高速轉向損失 -'+d+'%':'無加成'; } } return ''; }
+function getMods(){ const g=fxv; let te=0; for(const sl of SLOTS) te+=enhOf(sl.id);
+  return {speed:g('engine','speed'),grip:g('tire','grip')*g('susp','grip'),drift:g('tire','drift'),off:g('susp','off'),tank:g('tank','tank'),acc:g('gear','acc')*(1+0.004*te),brake:g('brake','brake'),pow:g('exhaust','pow'),climb:Math.max(0.6,1-0.006*te),aero:g('aero','aero')}; }
 const LOOK_COL=[null,0x7ac943,0xd9302b];
 const todayStr=()=>new Date().toLocaleDateString('sv');
 // ================= 數據追蹤（只存在這支手機；之後把 Track.forward 接到雲端即可）=================
@@ -1014,19 +1023,21 @@ const ICONS={
  gear:c=>{ let t=''; for(let i=0;i<8;i++) t+=`<rect x="28" y="6" width="8" height="12" rx="2" fill="${c}" stroke="${O}" stroke-width="3" transform="rotate(${i*45} 32 32)"/>`; return t+`<circle cx="32" cy="32" r="20" fill="${c}" stroke="${O}" stroke-width="3"/><circle cx="32" cy="32" r="8" fill="#fff" stroke="${O}" stroke-width="3"/>`; },
  brake:c=>`<circle cx="30" cy="32" r="22" fill="${c}" stroke="${O}" stroke-width="3"/><circle cx="30" cy="32" r="7" fill="#fff" stroke="${O}" stroke-width="3"/><g fill="${O}"><circle cx="30" cy="16" r="2.5"/><circle cx="30" cy="48" r="2.5"/><circle cx="14" cy="32" r="2.5"/><circle cx="46" cy="32" r="2.5"/><circle cx="19" cy="21" r="2.5"/><circle cx="41" cy="43" r="2.5"/><circle cx="19" cy="43" r="2.5"/><circle cx="41" cy="21" r="2.5"/></g><path d="M44 14c10 6 10 30 0 36l-4-6c5-5 5-19 0-24z" fill="#ff4d4d" stroke="${O}" stroke-width="3" stroke-linejoin="round"/>`,
  exhaust:c=>`<path d="M6 40h26c8 0 8-14 16-14h6" fill="none" stroke="${O}" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/><path d="M6 40h26c8 0 8-14 16-14h6" fill="none" stroke="${c}" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/><path d="M52 18c8 2 8 14 0 16 3-5 3-11 0-16z" fill="#ff922b" stroke="${O}" stroke-width="2"/><path d="M16 33v14M26 33v14" stroke="${O}" stroke-width="3"/>`,
- weight:c=>`<g transform="rotate(40 32 32)"><clipPath id="fcl"><path d="M38 3C26 11 23 32 31 47L33 47C47 41 52 35 50 29L43 27L51 23C52 14 46 7 38 3z"/></clipPath><path d="M38 3C26 11 23 32 31 47L33 47C47 41 52 35 50 29L43 27L51 23C52 14 46 7 38 3z" fill="${c}" stroke="${O}" stroke-width="2.5" stroke-linejoin="round"/><path clip-path="url(#fcl)" d="M33 44L19 35M33 44L49 34M33.2 38L19.200000000000003 29M33.2 38L49.2 28M33.6 32L19.6 23M33.6 32L49.6 22M34.4 26L20.4 17M34.4 26L50.4 16M35.4 20L21.4 11M35.4 20L51.4 10M36.6 14L22.6 5M36.6 14L52.6 4M37.6 9L23.6 0M37.6 9L53.6 -1" stroke="${O}" stroke-width="1.6" opacity=".5" fill="none"/><path d="M45 14c3 6 3 12 0 18" stroke="#fff" stroke-width="2.5" fill="none" stroke-linecap="round" opacity=".5"/><path d="M33 62C32 44 33 22 38 3" stroke="${O}" stroke-width="3.2" stroke-linecap="round" fill="none"/></g>`,
  aero:c=>`<path d="M10 22l40-8 4 8-40 8z" fill="${c}" stroke="${O}" stroke-width="3" stroke-linejoin="round"/><path d="M22 28v22M42 24v22" stroke="${O}" stroke-width="5" stroke-linecap="round"/><path d="M8 18v14M56 10v14" stroke="${O}" stroke-width="3" stroke-linecap="round"/><rect x="14" y="48" width="36" height="6" rx="3" fill="#3b3646" stroke="${O}" stroke-width="3"/>`,
  look:c=>`<path d="M32 6C22 22 14 30 14 40a18 18 0 0 0 36 0C50 30 42 22 32 6z" fill="${c}" stroke="${O}" stroke-width="3" stroke-linejoin="round"/><path d="M24 40a8 8 0 0 0 8 8" stroke="#fff" stroke-width="3" fill="none" stroke-linecap="round" opacity=".8"/>`,
  horn:c=>`<path d="M8 26h10l22-12v36L18 38H8z" fill="${c}" stroke="${O}" stroke-width="3" stroke-linejoin="round"/><path d="M46 24c4 4 4 12 0 16M52 18c8 8 8 20 0 28" fill="none" stroke="${O}" stroke-width="3" stroke-linecap="round"/>`};
 function partIcon(id,tier,size){ const c=QC[Math.min(tier,4)]; return `<svg viewBox="0 0 64 64" width="${size}" height="${size}">${ICONS[id](c)}</svg>`; }
 function renderGarage(){ renderCoins(); const box=$('slotsList'); box.innerHTML='';
   for(const sl of SLOTS){ const n=sl.lv.length, cu=eq(sl.id), row=document.createElement('div'); row.className='slotRow';
-    row.innerHTML=`<div class="pIco q${cu}">${partIcon(sl.id,cu,54)}</div><div class="pInfo"><b>${sl.name}</b><small>${sl.eff}</small><em style="color:${cu?'':'#868e96'}">${QN[cu]}品質・${sl.lv[cu]}</em><small>${sl.st[cu]}</small></div><div class="lvls" style="grid-template-columns:repeat(${n},1fr)"></div>`; const lv=row.querySelector('.lvls');
+    row.innerHTML=`<div class="pIco q${cu}">${partIcon(sl.id,cu,54)}</div><div class="pInfo"><b>${sl.name}</b><small>${sl.eff}</small><em>${QN[cu]}品質・${sl.lv[cu]}</em><small>${enhOf(sl.id)?'強化+'+enhOf(sl.id)+'　':''}${statNow(sl.id)}</small></div><div class="slotR"><div class="lvls" style="grid-template-columns:repeat(${n},1fr)"></div><div class="enh"></div></div>`; const lv=row.querySelector('.lvls');
     for(let k=0;k<n;k++){ const d=document.createElement('div'); const owned=k<=own(sl.id), cur=cu===k; const next=k===own(sl.id)+1;
       d.className='lv '+(cur?'on':owned?'own':next?'buy':'no'); d.style.setProperty('--q',QC[k]); d.title=QN[k]+'品質・'+sl.lv[k]+'：'+sl.st[k];
       d.innerHTML=`<span class="qi">${partIcon(sl.id,k,30)}</span><small>${cur?'使用中':owned?'已擁有':next?'💰 '+sl.price[k]:'🔒'}</small>`;
       d.onclick=()=>{ if(owned){ SAVE.equip[sl.id]=k; save(); renderGarage(); return; } if(!next){ toast('先買前一個品質'); return; } if(SAVE.coins<sl.price[k]){ toast('遊戲幣不夠'); return; } SAVE.coins-=sl.price[k]; track('buy',{item:sl.name+' '+QN[k],cost:sl.price[k]}); SAVE.parts[sl.id]=k; SAVE.equip[sl.id]=k; save(); renderGarage(); toast('買到 '+QN[k]+'品質「'+sl.lv[k]+'」！'); };
       lv.appendChild(d); }
+    const en=row.querySelector('.enh'), el=enhOf(sl.id); let pips=''; for(let i=0;i<ENH_MAX;i++) pips+=`<i class="${i<el?'on':''}"></i>`;
+    en.innerHTML=`<span class="eLbl">🔧 強化</span><span class="pips">${pips}</span>`; const eb=document.createElement('button'); eb.className='eBtn'; en.appendChild(eb);
+    if(el>=ENH_MAX){ eb.textContent='已強化到滿'; eb.disabled=true; } else { const cost=enhCost(sl,el); eb.textContent='強化 💰'+cost; eb.onclick=()=>{ if(SAVE.coins<cost){ toast('遊戲幣不夠'); return; } SAVE.coins-=cost; SAVE.enh[sl.id]=el+1; track('buy',{item:sl.name+' 強化+'+(el+1),cost}); save(); renderGarage(); toast(sl.name+' 強化到 +'+(el+1)+'！'); }; }
     box.appendChild(row); }
   $('drawBtn').disabled=SAVE.adDraw===todayStr(); $('drawBtn').textContent=SAVE.adDraw===todayStr()?'今天已開過 ✓':'📺 每日免費禮物盒'; }
 $('garageBack').onclick=()=>{ showScreen('scrMain'); renderCoins(); preview(); };
