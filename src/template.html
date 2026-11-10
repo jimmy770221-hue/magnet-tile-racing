@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="apple-mobile-web-app-title" content="磁力片賽車"><meta name="theme-color" content="#5fb0ec"><link rel="manifest" href="manifest.webmanifest"><link rel="apple-touch-icon" href="apple-touch-icon.png"><link rel="icon" type="image/png" href="icon-192.png">
 <title>磁力片賽車</title>
-<!-- 版本 2.7 -->
+<!-- 版本 2.8 -->
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@500;700;900&display=swap" rel="stylesheet">
 <style>
   :root{--red:#e8453c;--ink:#2b2236;--cream:#fffaf0;--cut:0px}
@@ -96,12 +96,17 @@
   .sbtn:disabled{background:#adb5bd;box-shadow:0 4px 0 #868e96;cursor:default}
   .car.locked{opacity:.85}.car .price{display:block;font-size:12px;font-weight:900;color:#e8590c}
   #slotsList{text-align:left}
-  .slotRow{display:grid;grid-template-columns:110px 1fr;gap:6px;align-items:center;margin:8px 0;padding:8px;background:#fff;border-radius:16px}
-  .slotRow b{font-size:16px}.slotRow small{display:block;font-size:11px;font-weight:700;opacity:.65}
-  .lvls{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
-  .lv{border:3px solid #dee2e6;background:#f8f9fa;border-radius:12px;padding:6px 2px;text-align:center;font-weight:900;font-size:13px;cursor:pointer}
-  .lv small{display:block;font-size:11px;opacity:.8}
-  .lv.on{background:#ffd43b;border-color:#2b2236}.lv.own{background:#d3f9d8}.lv.buy{background:#fff3bf;border-color:#f08c00}.lv.no{background:#f1f3f5;color:#adb5bd;cursor:not-allowed}
+  .slotRow{display:grid;grid-template-columns:62px 150px 1fr;gap:8px;align-items:center;margin:8px 0;padding:8px;background:#fff;border-radius:16px}
+  .slotRow b{font-size:16px}.slotRow small{display:block;font-size:11px;font-weight:700;opacity:.65}.slotRow em{display:block;font-size:12px;font-weight:900;font-style:normal}
+  .pIco{width:62px;height:62px;border-radius:14px;display:flex;align-items:center;justify-content:center;border:3px solid #adb5bd;background:radial-gradient(circle at 35% 30%,#fff,#e9ecef)}
+  .pIco.q1{border-color:#51cf66;background:radial-gradient(circle at 35% 30%,#fff,#d3f9d8)}.pIco.q2{border-color:#4dabf7;background:radial-gradient(circle at 35% 30%,#fff,#d0ebff)}
+  .pIco.q3{border-color:#b06cff;background:radial-gradient(circle at 35% 30%,#fff,#e9d8fd);box-shadow:0 0 8px #b06cff88}
+  .pIco.q4{border-color:#ff922b;background:radial-gradient(circle at 35% 30%,#fff,#ffe8cc);animation:qglow 1.6s ease-in-out infinite}
+  @keyframes qglow{0%,100%{box-shadow:0 0 6px #ff922b88}50%{box-shadow:0 0 16px #ff922b}}
+  .lvls{display:grid;gap:5px}
+  .lv{border:3px solid var(--q,#dee2e6);background:#f8f9fa;border-radius:12px;padding:4px 1px;text-align:center;font-weight:900;font-size:13px;cursor:pointer;min-width:0}
+  .lv .qi{display:block;line-height:0}.lv small{display:block;font-size:10px;opacity:.85;white-space:nowrap}
+  .lv.on{background:#ffd43b;box-shadow:0 0 0 2px #2b2236}.lv.own{background:#d3f9d8}.lv.buy{background:#fff3bf}.lv.no{background:#f1f3f5;cursor:not-allowed}.lv.no .qi{opacity:.35}
   #adBox,#dailyBox{z-index:30}
   #fsBtn{position:fixed;bottom:10px;left:calc(50% + 40px);z-index:6;border:0;background:rgba(255,255,255,.7);border-radius:14px;font-size:20px;padding:4px 10px;cursor:pointer}
   #rotate{display:none;position:fixed;inset:0;z-index:50;background:#2b2236;color:#fff;align-items:center;justify-content:center;font-size:24px;font-weight:900;text-align:center;padding:24px}
@@ -227,7 +232,7 @@
   <div class="btnrow"><button class="btn blue" data-back="scrTrack">返回</button><button class="btn" id="startBtn">出發！</button></div>
 </div></div>
 <div id="scrSettings" class="panel hidden"><div class="card" style="width:520px">
-  <p class="sub" id="verTxt" style="margin:0;font-size:12px;opacity:.6;text-align:right">版本 2.7</p>
+  <p class="sub" id="verTxt" style="margin:0;font-size:12px;opacity:.6;text-align:right">版本 2.8</p>
   <h1 style="font-size:32px">設定</h1>
   <div class="setRow"><div>震動<small>撞擊、氮氣、道具時手機震一下（主要安卓有效）</small></div><button class="sbtn" id="setVib">開</button></div>
   <div id="installRow" class="hidden" style="margin:6px 0 10px"><button class="sbtn ad" id="installBtn">📲 安裝到手機（主畫面圖示）</button></div>
@@ -275,7 +280,7 @@
   <div class="card" style="width:600px">
     <div id="topbar"><div class="coinbox">💰 <span id="coinTxt2">0</span></div><button class="sbtn" id="coinDraw">🎁 禮物盒 💰300</button><button class="sbtn" id="oddsBtn" style="padding:8px 10px">查看機率</button><button class="sbtn ad" id="drawBtn">📺 每日免費禮物盒</button></div>
     <h1 style="font-size:32px">車庫改裝</h1>
-    <p class="sub">6 個欄位，每欄 3 種配件・付費不會比較強太多，主要靠實力</p>
+    <p class="sub">11 種配件，品質分 白・綠・藍・紫・橘 五級・要一級一級往上買，主要還是靠實力</p>
     <div id="slotsList"></div>
     <div><button class="btn blue" id="garageBack">回選單</button></div>
   </div>
@@ -611,16 +616,34 @@ const FIRST_RUN=(()=>{ try{ return !localStorage.getItem('twq_save_v1'); }catch(
 let SAVE=(()=>{ try{ const x=JSON.parse(localStorage.getItem(SAVE_KEY)); if(x&&x.v===1) return x; }catch(e){} return {v:1,coins:300,cars:['taxi'],parts:{},equip:{},daily:'',streak:0,adDraw:'',races:0}; })();
 if(SAVE.tut===undefined) SAVE.tut=(SAVE.races>0)?1:0;
 function save(){ try{ localStorage.setItem(SAVE_KEY,JSON.stringify(SAVE)); }catch(e){} }
+const QN=['白色','綠色','藍色','紫色','橘色'], QC=['#e9ecef','#51cf66','#4dabf7','#b06cff','#ff922b'];
+const ext=(a,b)=>[0,a,b,Math.round(b*2.2/50)*50,Math.round(b*4.6/50)*50];
+const pct=(arr,inv)=>arr.map(v=>{ const d=Math.round((inv?(1-v):(v-1))*100); return d===0?'無加成':(inv?'-':'+')+d+'%'; });
+const FX={
+  engine:{speed:[1,1.04,1.08,1.11,1.14]},
+  tire:{grip:[1,1.05,1.10,1.14,1.18],drift:[1,1.15,1.3,1.45,1.6]},
+  susp:{grip:[1,1.03,1.06,1.09,1.12],off:[0.5,0.58,0.66,0.73,0.8]},
+  tank:{tank:[1,1.25,1.5,1.75,2.0]},
+  gear:{acc:[1,1.05,1.10,1.15,1.20]},
+  brake:{brake:[1,1.15,1.3,1.45,1.6]},
+  exhaust:{pow:[1,1.03,1.06,1.09,1.12]},
+  weight:{climb:[1,0.9,0.8,0.7,0.6],acc:[1,1.02,1.04,1.06,1.08]},
+  aero:{aero:[1,0.85,0.7,0.55,0.4]}};
 const SLOTS=[
-  {id:'engine',name:'引擎',eff:'最高速',lv:['原廠','改裝','渦輪'],price:[0,400,1000]},
-  {id:'tire',name:'輪胎',eff:'甩尾・抓地',lv:['一般胎','熱熔胎','拉力胎'],price:[0,300,800]},
-  {id:'susp',name:'懸吊',eff:'過彎穩定・草地減速少',lv:['軟','硬','競技'],price:[0,300,800]},
-  {id:'tank',name:'氮氣瓶',eff:'氮氣噴射時間',lv:['小','中','大'],price:[0,250,700]},
-  {id:'look',name:'外觀',eff:'純好看：車身顏色',lv:['原色','檳榔綠','廟宇紅'],price:[0,150,400]},
-  {id:'horn',name:'喇叭音效',eff:'純好看：按 H 或 📣',lv:['嗶嗶','垃圾車音樂','叫賣聲'],price:[0,150,400]}];
+  {id:'engine',name:'引擎',eff:'最高速',lv:['原廠引擎','強化引擎','賽道引擎','雙渦輪引擎','傳說核心'],price:ext(400,1000),st:pct(FX.engine.speed)},
+  {id:'tire',name:'輪胎',eff:'甩尾・抓地',lv:['一般胎','熱熔胎','拉力胎','競賽軟胎','星光胎'],price:ext(300,800),st:FX.tire.grip.map((g,i)=>'抓地'+pct(FX.tire.grip)[i]+' 甩尾'+pct(FX.tire.drift)[i])},
+  {id:'susp',name:'懸吊',eff:'過彎穩定・草地減速少',lv:['軟懸吊','硬懸吊','競技懸吊','可調避震','磁浮懸吊'],price:ext(300,800),st:FX.susp.grip.map((g,i)=>'過彎'+pct(FX.susp.grip)[i]+' 草地速度'+Math.round(FX.susp.off[i]*100)+'%')},
+  {id:'tank',name:'氮氣瓶',eff:'氮氣噴射時間',lv:['小氮氣瓶','中氮氣瓶','大氮氣瓶','雙層氮氣瓶','液態氮氣瓶'],price:ext(250,700),st:pct(FX.tank.tank)},
+  {id:'gear',name:'變速箱',eff:'起步・加速',lv:['原廠變速箱','短檔比','運動變速箱','競賽排檔','瞬變變速箱'],price:ext(300,800),st:pct(FX.gear.acc)},
+  {id:'brake',name:'煞車',eff:'煞車減速力',lv:['一般煞車','打孔碟盤','運動煞車','陶瓷煞車','碳纖煞車'],price:ext(200,600),st:pct(FX.brake.brake)},
+  {id:'exhaust',name:'排氣管',eff:'氮氣噴射威力',lv:['原廠排氣管','直通排氣管','鈦合金排氣管','賽車排氣管','烈焰排氣管'],price:ext(250,700),st:pct(FX.exhaust.pow)},
+  {id:'weight',name:'輕量化',eff:'爬坡・加速',lv:['原廠車身','減重內裝','鋁合金件','碳纖維件','羽毛車身'],price:ext(350,900),st:FX.weight.climb.map((g,i)=>(i?'爬坡減速少'+Math.round((1-FX.weight.climb[i])*100)+'%':'爬坡無加成')+' 加速'+pct(FX.weight.acc)[i])},
+  {id:'aero',name:'空力套件',eff:'高速過彎穩定',lv:['無尾翼','小尾翼','運動尾翼','競賽尾翼','全套空力'],price:ext(300,800),st:pct(FX.aero.aero,1).map(x=>x==='無加成'?x:'高速轉向損失 '+x)},
+  {id:'look',name:'外觀',eff:'純好看：車身顏色',lv:['原色','檳榔綠','廟宇紅'],price:[0,150,400],st:['原廠顏色','檳榔綠','廟宇紅']},
+  {id:'horn',name:'喇叭音效',eff:'純好看：按 H 或 📣',lv:['嗶嗶','垃圾車音樂','叫賣聲'],price:[0,150,400],st:['嗶嗶','垃圾車音樂','叫賣聲']}];
 const own=id=>SAVE.parts[id]||0, eq=id=>Math.min(SAVE.equip[id]||0,own(id));
-const DEFMODS={speed:1,grip:1,drift:1,off:0.5,tank:1};
-function getMods(){ const e=eq('engine'),t=eq('tire'),su=eq('susp'),k=eq('tank'); return {speed:[1,1.04,1.08][e],grip:[1,1.05,1.10][t]*[1,1.03,1.06][su],drift:[1,1.15,1.3][t],off:[0.5,0.58,0.66][su],tank:[1,1.25,1.5][k]}; }
+const DEFMODS={speed:1,grip:1,drift:1,off:0.5,tank:1,acc:1,brake:1,pow:1,climb:1,aero:1};
+function getMods(){ const g=(sl,k)=>FX[sl][k][eq(sl)]; return {speed:g('engine','speed'),grip:g('tire','grip')*g('susp','grip'),drift:g('tire','drift'),off:g('susp','off'),tank:g('tank','tank'),acc:g('gear','acc')*g('weight','acc'),brake:g('brake','brake'),pow:g('exhaust','pow'),climb:g('weight','climb'),aero:g('aero','aero')}; }
 const LOOK_COL=[null,0x7ac943,0xd9302b];
 const todayStr=()=>new Date().toLocaleDateString('sv');
 // ================= 數據追蹤（只存在這支手機；之後把 Track.forward 接到雲端即可）=================
@@ -882,10 +905,10 @@ function updateRacer(r,dt,racing){
   const F0=fwd(r.heading); const along=F0.dot(T[r.idx]);
   let maxS=MAX*r.def.max*r.mods.speed*(1+Math.min(r.coins,10)*0.015)*(r.bless>0?1.18:1)*(r.stun>0?0.5:1);
   if(!r.isPlayer){ const gap=(player.idx-r.idx)/(SI1-SI0); maxS*=r.skill*(1+THREE.MathUtils.clamp(gap*1.2,-0.08,0.12)); }
-  maxS*=1-THREE.MathUtils.clamp(slope*along,0,0.25)*(r.def.id==='truck'?0.5:1.0)*1.2;
+  maxS*=1-THREE.MathUtils.clamp(slope*along,0,0.25)*(r.def.id==='truck'?0.5:1.0)*r.mods.climb*1.2;
   if(off) maxS*=r.mods.off;
-  if(r.boost>0){ maxS*=r.boostKind==='n2o'?1.45:1.3; r.boost-=dt; }
-  if(throttle>0) r.speed+=(r.boost>0?42:17*r.def.acc)*dt*throttle; else if(throttle<0) r.speed-=(r.speed>0?30:12)*dt*Math.abs(throttle); else r.speed*=(1-0.6*dt);
+  if(r.boost>0){ maxS*=(r.boostKind==='n2o'?1.45:1.3)*r.mods.pow; r.boost-=dt; }
+  if(throttle>0) r.speed+=(r.boost>0?42:17*r.def.acc*r.mods.acc)*dt*throttle; else if(throttle<0) r.speed-=(r.speed>0?30*r.mods.brake:12)*dt*Math.abs(throttle); else r.speed*=(1-0.6*dt);
   r.speed-=slope*along*9.8*0.4*dt;
   if(r.speed>maxS) r.speed-=Math.min(r.speed-maxS,(off?70:30)*dt);
   if(r.speed<-9) r.speed=-9;
@@ -897,7 +920,7 @@ function updateRacer(r,dt,racing){
         if(r.combo>=2){ r.n2o+=0.2*Math.min(r.combo,5); while(r.n2o>=1){ r.n2o-=1; if(r.n2oSlots<2) r.n2oSlots++; } if(r.isPlayer) comboShow(r.combo); } } }
     if(r.drift){ r.n2o+=dt*(0.34+0.3*Math.abs(r.steerV))*(r.speed/MAX)*r.mods.drift*(tutRun?2:1); if(r.n2o>=1){ r.n2o=0; if(r.n2oSlots<2){ r.n2oSlots++; toast('氮氣 +1'); blip(880,0.12,'triangle',0.08);} } }
   }
-  let turn=r.steerV*2.25*r.def.grip*r.mods.grip*THREE.MathUtils.clamp(Math.abs(r.speed)/6,0,1)*Math.sign(r.speed||1)*(1-0.22*Math.abs(r.speed)/MAX);
+  let turn=r.steerV*2.25*r.def.grip*r.mods.grip*THREE.MathUtils.clamp(Math.abs(r.speed)/6,0,1)*Math.sign(r.speed||1)*(1-0.22*r.mods.aero*Math.abs(r.speed)/MAX);
   if(r.drift){ turn=r.driftDir*(1.2+0.9*r.steerV*r.driftDir); r.speed*=(1-0.08*dt); }
   r.heading+=turn*dt;
   const F=fwd(r.heading); r.pos.addScaledVector(F,r.speed*dt);
@@ -984,11 +1007,27 @@ function renderCars(){ const box=$('cars'); box.innerHTML=''; CARS.forEach((c,i)
 function renderCoins(){ $('coinTxt').textContent=SAVE.coins; $('coinTxt2').textContent=SAVE.coins; }
 renderCars(); renderCoins();
 $('adN2O').onclick=()=>{ if(bonusN2O>0) return; Ads.rewarded('下一場多一罐氮氣',()=>{ bonusN2O=1; $('adN2O').disabled=true; $('adN2O').textContent='✓ 已領，下一場開局有氮氣'; }); };
+const O='#2b2236';
+const ICONS={
+ engine:c=>`<rect x="14" y="26" width="36" height="22" rx="4" fill="${c}" stroke="${O}" stroke-width="3"/><rect x="22" y="16" width="20" height="10" rx="2" fill="${c}" stroke="${O}" stroke-width="3"/><path d="M8 32h6M8 42h6M50 34h6" stroke="${O}" stroke-width="4" stroke-linecap="round"/><circle cx="32" cy="37" r="6" fill="#fff" stroke="${O}" stroke-width="3"/><path d="M32 33v8M28 37h8" stroke="${O}" stroke-width="2"/><path d="M26 16v-5M38 16v-5" stroke="${O}" stroke-width="3" stroke-linecap="round"/>`,
+ tire:c=>`<circle cx="32" cy="32" r="24" fill="#3b3646" stroke="${O}" stroke-width="3"/><circle cx="32" cy="32" r="14" fill="${c}" stroke="${O}" stroke-width="3"/><path d="M32 18v28M18 32h28M22 22l20 20M42 22L22 42" stroke="${O}" stroke-width="2"/><circle cx="32" cy="32" r="4" fill="#fff" stroke="${O}" stroke-width="2"/>`,
+ susp:c=>`<rect x="18" y="8" width="28" height="7" rx="3" fill="${c}" stroke="${O}" stroke-width="3"/><rect x="18" y="49" width="28" height="7" rx="3" fill="${c}" stroke="${O}" stroke-width="3"/><path d="M22 15l20 5-20 5 20 5-20 5 20 5-20 4" fill="none" stroke="${O}" stroke-width="5" stroke-linejoin="round"/><path d="M22 15l20 5-20 5 20 5-20 5 20 5-20 4" fill="none" stroke="${c}" stroke-width="2" stroke-linejoin="round"/>`,
+ tank:c=>`<rect x="20" y="16" width="24" height="40" rx="12" fill="${c}" stroke="${O}" stroke-width="3"/><rect x="27" y="8" width="10" height="9" rx="2" fill="#fff" stroke="${O}" stroke-width="3"/><path d="M34 26l-8 12h6l-3 11 10-14h-6z" fill="#ffd43b" stroke="${O}" stroke-width="2" stroke-linejoin="round"/>`,
+ gear:c=>{ let t=''; for(let i=0;i<8;i++) t+=`<rect x="28" y="6" width="8" height="12" rx="2" fill="${c}" stroke="${O}" stroke-width="3" transform="rotate(${i*45} 32 32)"/>`; return t+`<circle cx="32" cy="32" r="20" fill="${c}" stroke="${O}" stroke-width="3"/><circle cx="32" cy="32" r="8" fill="#fff" stroke="${O}" stroke-width="3"/>`; },
+ brake:c=>`<circle cx="30" cy="32" r="22" fill="${c}" stroke="${O}" stroke-width="3"/><circle cx="30" cy="32" r="7" fill="#fff" stroke="${O}" stroke-width="3"/><g fill="${O}"><circle cx="30" cy="16" r="2.5"/><circle cx="30" cy="48" r="2.5"/><circle cx="14" cy="32" r="2.5"/><circle cx="46" cy="32" r="2.5"/><circle cx="19" cy="21" r="2.5"/><circle cx="41" cy="43" r="2.5"/><circle cx="19" cy="43" r="2.5"/><circle cx="41" cy="21" r="2.5"/></g><path d="M44 14c10 6 10 30 0 36l-4-6c5-5 5-19 0-24z" fill="#ff4d4d" stroke="${O}" stroke-width="3" stroke-linejoin="round"/>`,
+ exhaust:c=>`<path d="M6 40h26c8 0 8-14 16-14h6" fill="none" stroke="${O}" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/><path d="M6 40h26c8 0 8-14 16-14h6" fill="none" stroke="${c}" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/><path d="M52 18c8 2 8 14 0 16 3-5 3-11 0-16z" fill="#ff922b" stroke="${O}" stroke-width="2"/><path d="M16 33v14M26 33v14" stroke="${O}" stroke-width="3"/>`,
+ weight:c=>`<path d="M14 52C10 30 28 10 52 10c0 22-14 40-30 42z" fill="${c}" stroke="${O}" stroke-width="3" stroke-linejoin="round"/><path d="M12 54L44 22" stroke="${O}" stroke-width="3" stroke-linecap="round"/><path d="M26 38l8 2M32 30l8 2M20 44l8 2" stroke="${O}" stroke-width="2" stroke-linecap="round"/>`,
+ aero:c=>`<path d="M10 22l40-8 4 8-40 8z" fill="${c}" stroke="${O}" stroke-width="3" stroke-linejoin="round"/><path d="M22 28v22M42 24v22" stroke="${O}" stroke-width="5" stroke-linecap="round"/><path d="M8 18v14M56 10v14" stroke="${O}" stroke-width="3" stroke-linecap="round"/><rect x="14" y="48" width="36" height="6" rx="3" fill="#3b3646" stroke="${O}" stroke-width="3"/>`,
+ look:c=>`<path d="M32 6C22 22 14 30 14 40a18 18 0 0 0 36 0C50 30 42 22 32 6z" fill="${c}" stroke="${O}" stroke-width="3" stroke-linejoin="round"/><path d="M24 40a8 8 0 0 0 8 8" stroke="#fff" stroke-width="3" fill="none" stroke-linecap="round" opacity=".8"/>`,
+ horn:c=>`<path d="M8 26h10l22-12v36L18 38H8z" fill="${c}" stroke="${O}" stroke-width="3" stroke-linejoin="round"/><path d="M46 24c4 4 4 12 0 16M52 18c8 8 8 20 0 28" fill="none" stroke="${O}" stroke-width="3" stroke-linecap="round"/>`};
+function partIcon(id,tier,size){ const c=QC[Math.min(tier,4)]; return `<svg viewBox="0 0 64 64" width="${size}" height="${size}">${ICONS[id](c)}</svg>`; }
 function renderGarage(){ renderCoins(); const box=$('slotsList'); box.innerHTML='';
-  for(const sl of SLOTS){ const row=document.createElement('div'); row.className='slotRow'; row.innerHTML=`<div><b>${sl.name}</b><small>${sl.eff}</small></div><div class="lvls"></div>`; const lv=row.querySelector('.lvls');
-    for(let k=0;k<3;k++){ const d=document.createElement('div'); const owned=k<=own(sl.id), cur=eq(sl.id)===k; const next=k===own(sl.id)+1;
-      d.className='lv '+(cur?'on':owned?'own':next?'buy':'no'); d.innerHTML=sl.lv[k]+'<small>'+(cur?'使用中':owned?'已擁有':next?'💰 '+sl.price[k]:'先買前一級')+'</small>';
-      d.onclick=()=>{ if(owned){ SAVE.equip[sl.id]=k; save(); renderGarage(); return; } if(!next) return; if(SAVE.coins<sl.price[k]){ toast('遊戲幣不夠'); return; } SAVE.coins-=sl.price[k]; track('buy',{item:sl.name+' Lv'+k,cost:sl.price[k]}); SAVE.parts[sl.id]=k; SAVE.equip[sl.id]=k; save(); renderGarage(); };
+  for(const sl of SLOTS){ const n=sl.lv.length, cu=eq(sl.id), row=document.createElement('div'); row.className='slotRow';
+    row.innerHTML=`<div class="pIco q${cu}">${partIcon(sl.id,cu,54)}</div><div class="pInfo"><b>${sl.name}</b><small>${sl.eff}</small><em style="color:${cu?'':'#868e96'}">${QN[cu]}品質・${sl.lv[cu]}</em><small>${sl.st[cu]}</small></div><div class="lvls" style="grid-template-columns:repeat(${n},1fr)"></div>`; const lv=row.querySelector('.lvls');
+    for(let k=0;k<n;k++){ const d=document.createElement('div'); const owned=k<=own(sl.id), cur=cu===k; const next=k===own(sl.id)+1;
+      d.className='lv '+(cur?'on':owned?'own':next?'buy':'no'); d.style.setProperty('--q',QC[k]); d.title=QN[k]+'品質・'+sl.lv[k]+'：'+sl.st[k];
+      d.innerHTML=`<span class="qi">${partIcon(sl.id,k,30)}</span><small>${cur?'使用中':owned?'已擁有':next?'💰 '+sl.price[k]:'🔒'}</small>`;
+      d.onclick=()=>{ if(owned){ SAVE.equip[sl.id]=k; save(); renderGarage(); return; } if(!next){ toast('先買前一個品質'); return; } if(SAVE.coins<sl.price[k]){ toast('遊戲幣不夠'); return; } SAVE.coins-=sl.price[k]; track('buy',{item:sl.name+' '+QN[k],cost:sl.price[k]}); SAVE.parts[sl.id]=k; SAVE.equip[sl.id]=k; save(); renderGarage(); toast('買到 '+QN[k]+'品質「'+sl.lv[k]+'」！'); };
       lv.appendChild(d); }
     box.appendChild(row); }
   $('drawBtn').disabled=SAVE.adDraw===todayStr(); $('drawBtn').textContent=SAVE.adDraw===todayStr()?'今天已開過 ✓':'📺 每日免費禮物盒'; }
@@ -1041,7 +1080,7 @@ $('mBoard').onclick=()=>{ renderBoard(); showScreen('scrBoard'); };
 const DRAW_TABLE=[{id:'c100',name:'💰100',p:40,coin:100},{id:'c200',name:'💰200',p:25,coin:200},{id:'part',name:'隨機一個未滿級配件升一級（配件全齊時退還 💰300）',p:15},{id:'c500',name:'💰500',p:10,coin:500},{id:'c1000',name:'💰1000',p:5,coin:1000},{id:'c50',name:'💰50',p:5,coin:50}];
 if(Math.abs(DRAW_TABLE.reduce((s,e)=>s+e.p,0)-100)>0.001) console.error('DRAW_TABLE 機率總和不是 100');
 function drawFromTable(){ const x=Math.random()*100; let acc=0; for(const e of DRAW_TABLE){ acc+=e.p; if(x<acc) return e; } return DRAW_TABLE[DRAW_TABLE.length-1]; }
-function applyPrize(e){ if(e.coin){ SAVE.coins+=e.coin; return '獲得 '+e.name; } const pool=SLOTS.filter(sl=>own(sl.id)<2); if(pool.length){ const sl=pool[Math.floor(Math.random()*pool.length)]; SAVE.parts[sl.id]=own(sl.id)+1; SAVE.equip[sl.id]=own(sl.id); return '配件升級：'+sl.name+'「'+sl.lv[own(sl.id)]+'」！'; } SAVE.coins+=300; return '配件全齊，退還 💰300'; }
+function applyPrize(e){ if(e.coin){ SAVE.coins+=e.coin; return '獲得 '+e.name; } const pool=SLOTS.filter(sl=>own(sl.id)<sl.lv.length-1); if(pool.length){ const sl=pool[Math.floor(Math.random()*pool.length)]; SAVE.parts[sl.id]=own(sl.id)+1; SAVE.equip[sl.id]=own(sl.id); return '配件升級：'+sl.name+'・'+(sl.lv.length>3?QN[own(sl.id)]+'品質':'')+'「'+sl.lv[own(sl.id)]+'」！'; } SAVE.coins+=300; return '配件全齊，退還 💰300'; }
 function openGift(msg){ $('giftBox').classList.remove('hidden'); $('giftIco').className='shake'; $('giftIco').textContent='🎁'; $('giftTxt').textContent='打開中…'; $('giftOk').disabled=true;
   setTimeout(()=>{ $('giftIco').textContent='🎉'; $('giftIco').className='pop'; $('giftTxt').textContent=msg; $('giftOk').disabled=false; blip(784,0.12,'triangle',0.1); setTimeout(()=>blip(1047,0.2,'triangle',0.1),110); buzz(40); },650); }
 $('giftOk').onclick=()=>$('giftBox').classList.add('hidden');
@@ -1150,7 +1189,7 @@ function frame(now){
 }
 requestAnimationFrame(frame);
 window.__info=()=>({calls:renderer.info.render.calls,tris:renderer.info.render.triangles,dpr:DPR,N,len:Math.round(LENM)});
-window.__game={tileBurst,hitRacer,Track,tilePool,get tutRun(){return tutRun},DRAW_TABLE,drawFromTable,statsText,S,T,get state(){return state},get player(){return player},racers:()=>racers,standings,N,setStage:i=>{stage=STAGES[i];},get SI0(){return SI0},get SI1(){return SI1}};
+window.__game={getMods,tileBurst,hitRacer,Track,tilePool,get tutRun(){return tutRun},DRAW_TABLE,drawFromTable,statsText,S,T,get state(){return state},get player(){return player},racers:()=>racers,standings,N,setStage:i=>{stage=STAGES[i];},get SI0(){return SI0},get SI1(){return SI1}};
 </script>
 </body>
 </html>
