@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="apple-mobile-web-app-title" content="磁力片賽車"><meta name="theme-color" content="#5fb0ec">
 <title>磁力片賽車</title>
-<!-- 版本 2.2 -->
+<!-- 版本 2.3 -->
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@500;700;900&display=swap" rel="stylesheet">
 <style>
   :root{--red:#e8453c;--ink:#2b2236;--cream:#fffaf0;--cut:0px}
@@ -133,6 +133,24 @@
     #count{font-size:90px}#toast{font-size:24px}
     .panel{align-items:flex-start}
   }
+
+  /* ===== 觸控按鍵 v2.3：類比搖桿＋大按鈕，離邊緣拉遠 ===== */
+  #tLeft,#tRight{display:none}
+  #joyZone{position:fixed;left:0;bottom:0;width:44%;height:64%;pointer-events:auto;touch-action:none}
+  #joyBase{position:absolute;left:calc(max(40px,env(safe-area-inset-left) + 30px));bottom:44px;width:136px;height:136px;border-radius:50%;background:rgba(255,255,255,.28);border:4px solid rgba(255,255,255,.7);pointer-events:none;transition:opacity .15s}
+  #joyBase.act{background:rgba(255,255,255,.4)}
+  #joyKnob{position:absolute;left:50%;top:50%;width:64px;height:64px;margin:-32px 0 0 -32px;border-radius:50%;background:rgba(255,255,255,.92);border:4px solid #fff;box-shadow:0 3px 8px rgba(0,0,0,.25)}
+  #tDrift{right:calc(max(38px,env(safe-area-inset-right) + 28px));bottom:40px;width:92px;height:92px;font-size:19px}
+  #tN2O{right:calc(max(38px,env(safe-area-inset-right) + 28px));bottom:146px;width:80px;height:80px;font-size:18px}
+  #tBrake{right:calc(max(38px,env(safe-area-inset-right) + 28px) + 108px);bottom:40px;width:72px;height:72px;font-size:18px}
+  #tHorn{right:calc(max(38px,env(safe-area-inset-right) + 28px) + 100px);bottom:128px;width:54px;height:54px;font-size:20px}
+  @media (max-height:520px){
+    #joyBase{bottom:36px;width:124px;height:124px}
+    #tDrift{bottom:34px;width:86px;height:86px;font-size:18px}
+    #tN2O{bottom:132px;width:74px;height:74px;font-size:17px}
+    #tBrake{bottom:34px;width:68px;height:68px;font-size:17px}
+    #tHorn{bottom:118px;width:50px;height:50px;font-size:18px}
+  }
 </style>
 <script type="importmap">
 {"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"}}
@@ -153,7 +171,7 @@
 <button id="pauseBtn" class="hidden">⏸</button><div id="hudCombo"></div><button id="mute" class="hidden">🔊</button><button id="fsBtn" title="全螢幕">⛶</button>
 <div id="credit">地圖 © OpenStreetMap 貢獻者・地形 ASTER GDEM</div>
 <div id="touch" class="hidden">
-  <div class="tb" id="tLeft">◀</div><div class="tb" id="tRight">▶</div>
+  <div id="joyZone"></div><div id="joyBase"><div id="joyKnob"></div></div><div class="tb" id="tLeft">◀</div><div class="tb" id="tRight">▶</div>
   <div class="tb" id="tBrake">煞</div><div class="tb" id="tGas">油</div><div class="tb" id="tHorn">📣</div><div class="tb" id="tDrift">甩尾</div><div class="tb" id="tN2O">氮氣</div>
 </div>
 
@@ -194,7 +212,7 @@
   <div class="btnrow"><button class="btn blue" data-back="scrTrack">返回</button><button class="btn" id="startBtn">出發！</button></div>
 </div></div>
 <div id="scrSettings" class="panel hidden"><div class="card" style="width:520px">
-  <p class="sub" style="margin:0;font-size:12px;opacity:.6;text-align:right">版本 2.2</p>
+  <p class="sub" style="margin:0;font-size:12px;opacity:.6;text-align:right">版本 2.3</p>
   <h1 style="font-size:32px">設定</h1>
   <div class="setRow"><div>音量<small>引擎聲與音效</small></div><input type="range" id="setVol" min="0" max="100" step="10" style="width:150px"></div>
   <div class="setRow"><div>音效<small>開／關</small></div><button class="sbtn" id="setMute">開</button></div>
@@ -625,9 +643,24 @@ const MAX=27;
 let racers=[],player=null,state='menu',raceTime=0,countT=0,difficulty=1,chosen=0;
 const keys={}; addEventListener('keydown',e=>{ keys[e.code]=true; if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space','ShiftLeft','ShiftRight','ControlLeft','ControlRight'].includes(e.code)) e.preventDefault(); if((e.code==='ControlLeft'||e.code==='ControlRight'||e.code==='KeyZ')&&state==='race') useNitro(player); }); addEventListener('keyup',e=>{ keys[e.code]=false; }); addEventListener('keydown',e=>{ if(e.code==='KeyH'&&state==='race') playHorn(); if((e.code==='KeyX'||e.code==='KeyC')&&state==='race') useItem(player); });
 $('itemBtn').addEventListener('pointerdown',e=>{ e.preventDefault(); if(state==='race') useItem(player); });
-const touch={left:false,right:false,gas:false,brake:false,drift:false};
+const touch={left:false,right:false,gas:false,brake:false,drift:false,axis:0};
 for(const [id,k] of [['tLeft','left'],['tRight','right'],['tGas','gas'],['tBrake','brake'],['tDrift','drift']]){ const el=$(id); const on=e=>{e.preventDefault();touch[k]=true;el.classList.add('on');initAudio();}; const off=e=>{e.preventDefault();touch[k]=false;el.classList.remove('on');}; el.addEventListener('pointerdown',on); el.addEventListener('pointerup',off); el.addEventListener('pointercancel',off); el.addEventListener('pointerleave',off); }
 $('tN2O').addEventListener('pointerdown',e=>{ e.preventDefault(); if(state==='race') useNitro(player); }); $('tHorn').addEventListener('pointerdown',e=>{ e.preventDefault(); initAudio(); if(state==='race') playHorn(); });
+
+// ===== 類比搖桿（浮動式：手指按下的位置就是中心）=====
+(function(){ const zone=$('joyZone'), base=$('joyBase'), knob=$('joyKnob'); let pid=null, cx=0, cy=0; const R=58;
+  const defPos=()=>{ const r=base.getBoundingClientRect(); return [r.left+r.width/2,r.top+r.height/2]; };
+  let home=null; const setKnob=(dx,dy)=>{ knob.style.transform='translate('+dx+'px,'+dy+'px)'; };
+  zone.addEventListener('pointerdown',e=>{ if(pid!==null) return; e.preventDefault(); pid=e.pointerId; try{zone.setPointerCapture(pid)}catch(_){} initAudio();
+    if(!home) home=defPos(); const zr=zone.getBoundingClientRect();
+    cx=Math.min(Math.max(e.clientX,zr.left+R+10),zr.right-R); cy=Math.min(Math.max(e.clientY,zr.top+R),zr.bottom-R-10);
+    base.style.left=(cx-base.offsetWidth/2)+'px'; base.style.bottom='auto'; base.style.top=(cy-base.offsetHeight/2)+'px'; base.classList.add('act'); touch.axis=0; move(e); });
+  function move(e){ const dx=e.clientX-cx, dy=e.clientY-cy; const d=Math.hypot(dx,dy)||1, k=Math.min(1,d/R); const px=dx/d*k*R, py=dy/d*k*R; setKnob(px,py);
+    let a=-(px/R); const dz=0.12; a=Math.abs(a)<dz?0:(Math.abs(a)-dz)/(1-dz)*Math.sign(a); touch.axis=Math.max(-1,Math.min(1,a)); }
+  zone.addEventListener('pointermove',e=>{ if(e.pointerId===pid) move(e); });
+  const end=e=>{ if(e.pointerId!==pid) return; pid=null; touch.axis=0; setKnob(0,0); base.classList.remove('act'); base.style.left=''; base.style.top=''; base.style.bottom=''; };
+  zone.addEventListener('pointerup',end); zone.addEventListener('pointercancel',end); })();
+
 const isTouch=matchMedia('(pointer:coarse)').matches; if(isTouch) $('tGas').classList.add('hidden');
 const fwd=h=>new THREE.Vector3(-Math.sin(h),0,-Math.cos(h));
 function angDiff(a,b){ let d=a-b; while(d>Math.PI)d-=2*Math.PI; while(d<-Math.PI)d+=2*Math.PI; return d; }
@@ -695,7 +728,7 @@ function updateRacer(r,dt,racing){
   if(racing && !r.finished){
     if(r.isPlayer && !window.__auto){
       throttle=isTouch?(touch.brake?-1:1):(keys.ArrowUp||keys.KeyW?1:0)-(keys.ArrowDown||keys.KeyS?1:0);
-      steer=(keys.ArrowLeft||keys.KeyA||touch.left?1:0)-(keys.ArrowRight||keys.KeyD||touch.right?1:0);
+      steer=Math.max(-1,Math.min(1,(keys.ArrowLeft||keys.KeyA||touch.left?1:0)-(keys.ArrowRight||keys.KeyD||touch.right?1:0)+touch.axis));
       driftBtn=!!(keys.ShiftLeft||keys.ShiftRight||keys.Space||touch.drift);
     } else {
       const look=8+Math.max(r.speed,0)*0.55; const ti=Math.min(N-1,r.idx+Math.round(look/SEG));
@@ -746,7 +779,8 @@ function updateRacer(r,dt,racing){
     if(n2.dist>HW+24 || (r.isPlayer&&r.wrongT>6) || (racing&&r.isPlayer&&keys.KeyR&&!r.rKeyHeld)){ resetRacer(r,n2.i); }
     if(r.isPlayer) r.rKeyHeld=!!keys.KeyR;
   }
-  const groundY=n2.dist>HW+1.8?terrainH(r.pos.x,r.pos.z)+0.05:S[n2.i].y;
+  const roadY=(()=>{ const i=n2.i, dxp=r.pos.x-S[i].x, dzp=r.pos.z-S[i].z, d=dxp*T[i].x+dzp*T[i].z; const j=Math.max(0,Math.min(S.length-1,i+(d>=0?1:-1))); const t=Math.min(1,Math.abs(d)/2.5); return S[i].y*(1-t)+S[j].y*t; })();
+  const groundY=n2.dist>HW+1.8?terrainH(r.pos.x,r.pos.z)+0.05:roadY;
   r.vy-=30*dt; r.y+=r.vy*dt; if(r.y<groundY){ r.y=groundY; r.vy=0; } if(r.y>groundY+3) r.y=groundY+3; r.pos.y=r.y;
   for(const p of pads){ const dx=r.pos.x-p.c.x,dz=r.pos.z-p.c.z; const al=dx*T[p.i].x+dz*T[p.i].z, la=dx*SIDE[p.i].x+dz*SIDE[p.i].z; if(Math.abs(al)<2.6&&Math.abs(la)<2.0&&r.boost<0.9){ r.boost=1.2; r.boostKind='pad'; if(r.isPlayer){ toast('加速！'); blip(400,0.35,'triangle',0.1,400);} } }
   for(const c of coins){ if(!c.active) continue; const dx=r.pos.x-c.pos.x,dz=r.pos.z-c.pos.z; if(dx*dx+dz*dz<3.2&&Math.abs(r.pos.y+1.2-c.pos.y)<2.5){ c.active=false; c.t=10; r.coins=Math.min(r.coins+1,10); if(r.isPlayer){ r.n2o=Math.min(0.999,r.n2o+0.12); blip(988,0.08,'square',0.06); setTimeout(()=>blip(1319,0.12,'square',0.06),70);} } }
